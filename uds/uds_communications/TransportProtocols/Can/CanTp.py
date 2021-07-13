@@ -414,6 +414,11 @@ class CanTp(iTp):
         else:
             raise Exception("I do not know how to receive this addressing type")
 
+    # @brief override transmit method from the asscociated __connection
+    # @param func callable use to repalce actual configured tranmsit method
+    def overwrite_transmit_method(self, func):
+        self.__connection.transmit = func
+
     ##
     # @brief function to decode the StMin parameter
     @staticmethod

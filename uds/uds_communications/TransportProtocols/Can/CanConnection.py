@@ -20,11 +20,12 @@ class CanConnection(object):
     def __init__(self, callback, filter, bus, is_external=False):
         self.__bus = bus
         self.__is_external = is_external
-        listener = can.Listener()
-        listener.on_message_received = callback
-        self.__notifier = can.Notifier(self.__bus, [listener], 1.0)
-        self.__listeners = [listener]
-        self.addFilter(filter)
+        if not self.__is_external:
+            listener = can.Listener()
+            listener.on_message_received = callback
+            self.__notifier = can.Notifier(self.__bus, [listener], 1.0)
+            self.__listeners = [listener]
+            self.addFilter(filter)
 
     ##
     # @brief Adds call back (via additional listener) to the notifier which is attached to this bus
@@ -56,8 +57,8 @@ class CanConnection(object):
         self.__bus.send(canMsg)
 
     def shutdown(self):
-        self.__notifier.stop()
         if self.__is_external == False:
+            self.__notifier.stop()
             self.__bus.reset()
             self.__bus.shutdown()
             self.__bus = None
