@@ -384,6 +384,7 @@ class CanTp(iTp):
         # deregister filters, listeners and notifiers etc
         # close can connection
         self.__connection.shutdown()
+        CanConnectionFactory.connections = {}
         self.__connection = None
 
     ##
