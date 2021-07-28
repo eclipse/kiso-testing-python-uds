@@ -46,7 +46,7 @@ class CanConnection(object):
     ##
     # @brief Adds call back (via additional listener) to the notifier which is attached to this bus
     def addCallback(self, callback):
-        listener = can.Listener()
+        listener = CanListener()
         listener.on_message_received = callback
         self.__notifier.add_listener(listener)
         self.__listeners.append(listener)
