@@ -103,7 +103,7 @@ class CanConnectionFactory(object):
                 if channel not in CanConnectionFactory.connections:
                     CanConnectionFactory.connections[channel] = CanConnection(callback, filter,
                                                                               socketcan.SocketcanBus(channel=channel,
-                                                                              fd=useFd, bitrate=baudrate, data_bitrate=data_baudrate))
+                                                                              fd=useFd, bitrate=baudrate, data_bitrate=data_baudrate), is_external=True)
                 else:
                     CanConnectionFactory.connections[channel].addCallback(callback)
                     CanConnectionFactory.connections[channel].addFilter(filter)
@@ -166,6 +166,7 @@ class CanConnectionFactory(object):
         return None
 
     @staticmethod
-    def clearConnections():
+    def clearConnections(**kwargs):
         # purge connections dict at can disconnect
-        CanConnectionFactory.connections = {}
+        if 'interface' in kwargs:
+            CanConnectionFactory.connections = {}
