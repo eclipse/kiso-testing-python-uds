@@ -222,13 +222,10 @@ class CanTp(iTp):
                             stMinTimer.start()
                             timeoutTimer.stop()
                         else:
-                            breakpoint()
                             raise Exception("Unexpected Flow Control Continue to Send request")
                     else:
-                        breakpoint()
                         raise Exception("Unexpected fs response from ECU")
                 else:
-                    breakpoint()
                     raise Exception("Unexpected response from device")
 
             if state == CanTpState.SEND_SINGLE_FRAME:
