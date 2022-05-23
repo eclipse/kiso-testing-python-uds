@@ -21,7 +21,6 @@ from uds.uds_communications.TransportProtocols.Can.CanTpTypes import CANTP_MAX_P
     FIRST_FRAME_DATA_START_INDEX, SINGLE_FRAME_DATA_START_INDEX, CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX, \
     CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX, FLOW_CONTROL_BS_INDEX, FLOW_CONTROL_STMIN_INDEX
 from uds import CanConnectionFactory
-#from uds import CanConnection
 from uds import Config
 
 from os import path
@@ -149,31 +148,6 @@ class CanTp(iTp):
             self.__config['canTp']['discardNegResp'] = str(kwargs['discardNegResp'])
 
     ##
-    # @brief connection method
-    # def createBusConnection(self):
-    #     # check config file and load
-    #     connectionType = self.__config['DEFAULT']['interface']
-    #
-    #     if connectionType == 'virtual':
-    #         connectionName = self.__config['virtual']['interfaceName']
-    #         bus = can.interface.Bus(connectionName,
-    #                                 bustype='virtual')
-    #     elif connectionType == 'peak':
-    #         channel = self.__config['peak']['device']
-    #         baudrate = self.__config['connection']['baudrate']
-    #         bus = pcan.PcanBus(channel,
-    #                            bitrate=baudrate)
-    #     elif connectionType == 'vector':
-    #         channel = self.__config['vector']['channel']
-    #         app_name = self.__config['vector']['app_name']
-    #         baudrate = int(self.__config['connection']['baudrate']) * 1000
-    #         bus = vector.VectorBus(channel,
-    #                                app_name=app_name,
-    #                                data_bitrate=baudrate)
-    #
-    #     return bus
-
-    ##
     # @brief send method
     # @param [in] payload the payload to be sent
     # @param [in] tpWaitTime time to wait inside loop
@@ -182,6 +156,7 @@ class CanTp(iTp):
         result = self.encode_isotp(payload, functionalReq, tpWaitTime = tpWaitTime)
         return result
 
+        
     ##
     # @brief encoding method
     # @param payload the payload to be sent
@@ -219,7 +194,11 @@ class CanTp(iTp):
         data = None
 
         while endOfMessage_flag is False:
-            rxPdu = self.getNextBufferedMessage()
+
+            rxPdu = None
+            
+            if state == CanTpState.WAIT_FLOW_CONTROL:
+                rxPdu = self.getNextBufferedMessage()
 
             if rxPdu is not None:
                 N_PCI = (rxPdu[0] & 0xF0) >> 4
@@ -231,18 +210,17 @@ class CanTp(iTp):
                         raise Exception("Overflow received from ECU")
                     elif fs == CanTpFsTypes.CONTINUE_TO_SEND:
                         if state == CanTpState.WAIT_FLOW_CONTROL:
-                            if fs == CanTpFsTypes.CONTINUE_TO_SEND:
-                                bs = rxPdu[FC_BS_INDEX]
-                                if(bs == 0):
-                                    bs = 585
-                                blockList = self.create_blockList(payload[payloadPtr:],
-                                                                  bs)
-                                stMin = self.decode_stMin(rxPdu[FC_STMIN_INDEX])
-                                currBlock = blockList.pop(0)
-                                state = CanTpState.SEND_CONSECUTIVE_FRAME
-                                stMinTimer.timeoutTime = stMin
-                                stMinTimer.start()
-                                timeoutTimer.stop()
+                            bs = rxPdu[FC_BS_INDEX]
+                            if(bs == 0):
+                                bs = 585
+                            blockList = self.create_blockList(payload[payloadPtr:],
+                                                                bs)
+                            stMin = self.decode_stMin(rxPdu[FC_STMIN_INDEX])
+                            currBlock = blockList.pop(0)
+                            state = CanTpState.SEND_CONSECUTIVE_FRAME
+                            stMinTimer.timeoutTime = stMin
+                            stMinTimer.start()
+                            timeoutTimer.stop()
                         else:
                             raise Exception("Unexpected Flow Control Continue to Send request")
                     else:
@@ -287,7 +265,6 @@ class CanTp(iTp):
                         else:
                             timeoutTimer.start()
                             state = CanTpState.WAIT_FLOW_CONTROL
-                            # print("waiting for flow control")
             else:
                 sleep(tpWaitTime)
             txPdu = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
@@ -305,11 +282,11 @@ class CanTp(iTp):
         return self.decode_isotp(timeout_s)
 
     ##
-    # @breif decoding method
+    # @brief decoding method
     # @param timeout_ms the timeout to wait before exiting
     # @param received_data the data that should be decoded in case of ITF Automation
     # @param use_external_snd_rcv_functions boolean to state if external sending and receiving functions shall be used
-    # return a list
+    # @return a list
     def decode_isotp(self, timeout_s=1, received_data=None, use_external_snd_rcv_functions: bool = False):
         timeoutTimer = ResettableTimer(timeout_s)
 
@@ -328,9 +305,11 @@ class CanTp(iTp):
         timeoutTimer.start()
         while endOfMessage_flag is False:
 
-            rxPdu = self.getNextBufferedMessage()
-            if use_external_snd_rcv_functions:
+            if use_external_snd_rcv_functions and state != CanTpState.RECEIVING_CONSECUTIVE_FRAME:
                 rxPdu = received_data
+            else:
+                rxPdu = self.getNextBufferedMessage()
+
             if rxPdu is not None:
                 if rxPdu[N_PCI_INDEX] == 0x00:
                     rxPdu = rxPdu[1:]
@@ -474,14 +453,6 @@ class CanTp(iTp):
 
     ##
     # @brief transmits the data over can using can connection
-    # def transmit(self, data, functionalReq=False):
-    #
-    #     # check functional request
-    #     if functionalReq:
-    #         raise Exception("Functional requests are currently not supported")
-    #     else:
-    #         self.__connection.transmit(data, self.__reqId, self.__addressingType)
-
     def transmit(self, data, functionalReq=False, use_external_snd_rcv_functions: bool = False):
         # check functional request
         if functionalReq:
@@ -499,9 +470,7 @@ class CanTp(iTp):
             transmitData[1:] = data
         else:
             raise Exception("I do not know how to send this addressing type")
-        if use_external_snd_rcv_functions:
-            return transmitData
-        self.__connection.transmit(transmitData, self.__reqId, )
+        self.__connection.transmit(transmitData, self.__reqId)
 
     @property
     def reqIdAddress(self):
@@ -518,4 +487,3 @@ class CanTp(iTp):
     @resIdAddress.setter
     def resIdAddress(self, value):
         self.__resId = value
-

@@ -1,8 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Current Version
+
+### Features
+- Add support for ISO TP for server simulation
+
+## [1.2.0]
+
+### Features
+- Added overwrite_transmit_method in CanTp to use external transmission methods
+
 ## [1.1.0] - 2019-08-14
-### Added
+
+### Features
 - Added socket can interface for linux support, tested with MCP2515 shield
 - Added UDS retry on response pending negative response code
 
