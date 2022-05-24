@@ -1,6 +1,12 @@
-from uds.uds_config_tool.UtilityFunctions import getSdgsDataItem, getParamWithSemantic, getServiceIdFromDiagService, \
-                                                 getLongName, getShortName, getSdgsData, getPositiveResponse
-
+from uds.uds_config_tool.UtilityFunctions import (
+    getLongName,
+    getParamWithSemantic,
+    getPositiveResponse,
+    getSdgsData,
+    getSdgsDataItem,
+    getServiceIdFromDiagService,
+    getShortName,
+)
 
 if __name__ == "__main__":
     import xml.etree.ElementTree as ET
@@ -14,12 +20,12 @@ if __name__ == "__main__":
     for child in root.iter():
         currTag = child.tag
         try:
-            xmlElements[child.attrib['ID']] = child
+            xmlElements[child.attrib["ID"]] = child
         except KeyError:
             pass
 
     for key, value in xmlElements.items():
-        if value.tag == 'DIAG-SERVICE':
+        if value.tag == "DIAG-SERVICE":
             print(value)
             shortName = getShortName(value)
             longName = getLongName(value)
@@ -28,8 +34,16 @@ if __name__ == "__main__":
             print("Long Name: {0}".format(longName))
             for i, j in sdgsParams.items():
                 print("{0}: {1}".format(i, j))
-            print("Service Id: {0:#x}".format(getServiceIdFromDiagService(value, xmlElements)))
-            print("DiagInstanceName: {0}".format(getSdgsDataItem(value, "DiagInstanceName")))
+            print(
+                "Service Id: {0:#x}".format(
+                    getServiceIdFromDiagService(value, xmlElements)
+                )
+            )
+            print(
+                "DiagInstanceName: {0}".format(
+                    getSdgsDataItem(value, "DiagInstanceName")
+                )
+            )
             requestElement = xmlElements[value.find("REQUEST-REF").attrib["ID-REF"]]
             positiveResponses = getPositiveResponse(value, xmlElements)
             print(positiveResponses)

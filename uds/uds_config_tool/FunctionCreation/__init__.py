@@ -8,4 +8,3 @@ __license__ = "MIT"
 __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
-

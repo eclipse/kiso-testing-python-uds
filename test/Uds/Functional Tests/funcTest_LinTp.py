@@ -1,12 +1,13 @@
-from uds import LinTp
 from time import sleep
+
+from uds import LinTp
 
 if __name__ == "__main__":
 
     connection = LinTp(nodeAddress=0x0A)
 
     sleep(0.1)
-    a = [0xb2, 0x01, 0xFF, 0x7F, 0xFF, 0x7F]
+    a = [0xB2, 0x01, 0xFF, 0x7F, 0xFF, 0x7F]
     try:
 
         connection.send(a)
@@ -23,6 +24,5 @@ if __name__ == "__main__":
         print(b)
     except:
         pass
-
 
     connection.closeConnection()

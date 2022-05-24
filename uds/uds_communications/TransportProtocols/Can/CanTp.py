@@ -9,21 +9,30 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
+from os import path
 from time import sleep
 
-from uds import iTp
-from uds import ResettableTimer
-from uds import fillArray
-from uds.uds_communications.TransportProtocols.Can.CanTpTypes import CanTpAddressingTypes, CanTpState, \
-    CanTpMessageType, CanTpFsTypes, CanTpMTypes
-from uds.uds_communications.TransportProtocols.Can.CanTpTypes import CANTP_MAX_PAYLOAD_LENGTH, SINGLE_FRAME_DL_INDEX, \
-    FIRST_FRAME_DL_INDEX_HIGH, FIRST_FRAME_DL_INDEX_LOW, FC_BS_INDEX, FC_STMIN_INDEX, N_PCI_INDEX, \
-    FIRST_FRAME_DATA_START_INDEX, SINGLE_FRAME_DATA_START_INDEX, CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX, \
-    CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX, FLOW_CONTROL_BS_INDEX, FLOW_CONTROL_STMIN_INDEX
-from uds import CanConnectionFactory
-from uds import Config
-
-from os import path
+from uds import CanConnectionFactory, Config, ResettableTimer, fillArray, iTp
+from uds.uds_communications.TransportProtocols.Can.CanTpTypes import (
+    CANTP_MAX_PAYLOAD_LENGTH,
+    CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX,
+    CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX,
+    FC_BS_INDEX,
+    FC_STMIN_INDEX,
+    FIRST_FRAME_DATA_START_INDEX,
+    FIRST_FRAME_DL_INDEX_HIGH,
+    FIRST_FRAME_DL_INDEX_LOW,
+    FLOW_CONTROL_BS_INDEX,
+    FLOW_CONTROL_STMIN_INDEX,
+    N_PCI_INDEX,
+    SINGLE_FRAME_DATA_START_INDEX,
+    SINGLE_FRAME_DL_INDEX,
+    CanTpAddressingTypes,
+    CanTpFsTypes,
+    CanTpMessageType,
+    CanTpMTypes,
+    CanTpState,
+)
 
 
 ##
@@ -34,7 +43,7 @@ from os import path
 # depends on a bus object for communication on CAN
 class CanTp(iTp):
 
-    configParams = ['reqId', 'resId', 'addressingType']
+    configParams = ["reqId", "resId", "addressingType"]
 
     ##
     # @brief constructor for the CanTp object
@@ -47,19 +56,19 @@ class CanTp(iTp):
         self.__checkKwargs(**kwargs)
 
         # load variables from the config
-        self.__N_AE = int(self.__config['canTp']['N_AE'], 16)
-        self.__N_TA = int(self.__config['canTp']['N_TA'], 16)
-        self.__N_SA = int(self.__config['canTp']['N_SA'], 16)
+        self.__N_AE = int(self.__config["canTp"]["N_AE"], 16)
+        self.__N_TA = int(self.__config["canTp"]["N_TA"], 16)
+        self.__N_SA = int(self.__config["canTp"]["N_SA"], 16)
 
-        Mtype = self.__config['canTp']['Mtype']
-        if (Mtype == "DIAGNOSTICS"):
+        Mtype = self.__config["canTp"]["Mtype"]
+        if Mtype == "DIAGNOSTICS":
             self.__Mtype = CanTpMTypes.DIAGNOSTICS
-        elif (Mtype == "REMOTE_DIAGNOSTICS"):
+        elif Mtype == "REMOTE_DIAGNOSTICS":
             self.__Mtype = CanTpMTypes.REMOTE_DIAGNOSTICS
         else:
             raise Exception("Do not understand the Mtype config")
 
-        addressingType = self.__config['canTp']['addressingType']
+        addressingType = self.__config["canTp"]["addressingType"]
         if addressingType == "NORMAL":
             self.__addressingType = CanTpAddressingTypes.NORMAL
         elif addressingType == "NORMAL_FIXED":
@@ -71,20 +80,18 @@ class CanTp(iTp):
         else:
             raise Exception("Do not understand the addressing config")
 
-        self.__reqId = int(self.__config['canTp']['reqId'], 16)
-        self.__resId = int(self.__config['canTp']['resId'], 16)
+        self.__reqId = int(self.__config["canTp"]["reqId"], 16)
+        self.__resId = int(self.__config["canTp"]["resId"], 16)
 
         # sets up the relevant parameters in the instance
-        if(
-                (self.__addressingType == CanTpAddressingTypes.NORMAL) |
-                (self.__addressingType == CanTpAddressingTypes.NORMAL_FIXED)
+        if (self.__addressingType == CanTpAddressingTypes.NORMAL) | (
+            self.__addressingType == CanTpAddressingTypes.NORMAL_FIXED
         ):
             self.__minPduLength = 7
             self.__maxPduLength = 63
             self.__pduStartIndex = 0
-        elif(
-                (self.__addressingType == CanTpAddressingTypes.EXTENDED) |
-                (self.__addressingType == CanTpAddressingTypes.MIXED)
+        elif (self.__addressingType == CanTpAddressingTypes.EXTENDED) | (
+            self.__addressingType == CanTpAddressingTypes.MIXED
         ):
             self.__minPduLength = 6
             self.__maxPduLength = 62
@@ -92,19 +99,19 @@ class CanTp(iTp):
 
         # set up the CAN connection
         canConnectionFactory = CanConnectionFactory()
-        self.__connection = canConnectionFactory(self.callback_onReceive,
-                                                 self.__resId, # <-filter
-                                                 configPath, **kwargs)
+        self.__connection = canConnectionFactory(
+            self.callback_onReceive, self.__resId, configPath, **kwargs  # <-filter
+        )
 
         self.__recvBuffer = []
 
-        self.__discardNegResp = bool(self.__config['canTp']['discardNegResp'])
+        self.__discardNegResp = bool(self.__config["canTp"]["discardNegResp"])
 
     ##
     # @brief used to load the local configuration options and override them with any passed in from a config file
     def __loadConfiguration(self, configPath, **kwargs):
 
-        #load the base config
+        # load the base config
         baseConfig = path.dirname(__file__) + "/config.ini"
         self.__config = Config()
         if path.exists(baseConfig):
@@ -123,46 +130,51 @@ class CanTp(iTp):
     # @brief goes through the kwargs and overrides any of the local configuration options
     def __checkKwargs(self, **kwargs):
 
-        if 'addressingType' in kwargs:
-            self.__config['canTp']['addressingType'] = kwargs['addressingType']
+        if "addressingType" in kwargs:
+            self.__config["canTp"]["addressingType"] = kwargs["addressingType"]
 
-        if 'reqId' in kwargs:
-            self.__config['canTp']['reqId'] = str(hex(kwargs['reqId']))
+        if "reqId" in kwargs:
+            self.__config["canTp"]["reqId"] = str(hex(kwargs["reqId"]))
 
-        if 'resId' in kwargs:
-            self.__config['canTp']['resId'] = str(hex(kwargs['resId']))
+        if "resId" in kwargs:
+            self.__config["canTp"]["resId"] = str(hex(kwargs["resId"]))
 
-        if 'N_SA' in kwargs:
-            self.__config['canTp']['N_SA'] = str(kwargs['N_SA'])
+        if "N_SA" in kwargs:
+            self.__config["canTp"]["N_SA"] = str(kwargs["N_SA"])
 
-        if 'N_TA' in kwargs:
-            self.__config['canTp']['N_TA'] = str(kwargs['N_TA'])
+        if "N_TA" in kwargs:
+            self.__config["canTp"]["N_TA"] = str(kwargs["N_TA"])
 
-        if 'N_AE' in kwargs:
-            self.__config['canTp']['N_AE'] = str(kwargs['N_AE'])
+        if "N_AE" in kwargs:
+            self.__config["canTp"]["N_AE"] = str(kwargs["N_AE"])
 
-        if 'Mtype' in kwargs:
-            self.__config['canTp']['Mtype'] = str(kwargs['Mtype'])
+        if "Mtype" in kwargs:
+            self.__config["canTp"]["Mtype"] = str(kwargs["Mtype"])
 
-        if 'discardNegResp' in kwargs:
-            self.__config['canTp']['discardNegResp'] = str(kwargs['discardNegResp'])
+        if "discardNegResp" in kwargs:
+            self.__config["canTp"]["discardNegResp"] = str(kwargs["discardNegResp"])
 
     ##
     # @brief send method
     # @param [in] payload the payload to be sent
     # @param [in] tpWaitTime time to wait inside loop
-    def send(self, payload, functionalReq=False, tpWaitTime = 0.01):
+    def send(self, payload, functionalReq=False, tpWaitTime=0.01):
         self.clearBufferedMessages()
-        result = self.encode_isotp(payload, functionalReq, tpWaitTime = tpWaitTime)
+        result = self.encode_isotp(payload, functionalReq, tpWaitTime=tpWaitTime)
         return result
 
-        
     ##
     # @brief encoding method
     # @param payload the payload to be sent
     # @param use_external_snd_rcv_functions boolean to state if external sending and receiving functions shall be used
     # @param [in] tpWaitTime time to wait inside loop
-    def encode_isotp(self, payload, functionalReq: bool = False, use_external_snd_rcv_functions: bool = False, tpWaitTime = 0.01):
+    def encode_isotp(
+        self,
+        payload,
+        functionalReq: bool = False,
+        use_external_snd_rcv_functions: bool = False,
+        tpWaitTime=0.01,
+    ):
 
         payloadLength = len(payload)
         payloadPtr = 0
@@ -196,7 +208,7 @@ class CanTp(iTp):
         while endOfMessage_flag is False:
 
             rxPdu = None
-            
+
             if state == CanTpState.WAIT_FLOW_CONTROL:
                 rxPdu = self.getNextBufferedMessage()
 
@@ -211,10 +223,9 @@ class CanTp(iTp):
                     elif fs == CanTpFsTypes.CONTINUE_TO_SEND:
                         if state == CanTpState.WAIT_FLOW_CONTROL:
                             bs = rxPdu[FC_BS_INDEX]
-                            if(bs == 0):
+                            if bs == 0:
                                 bs = 585
-                            blockList = self.create_blockList(payload[payloadPtr:],
-                                                                bs)
+                            blockList = self.create_blockList(payload[payloadPtr:], bs)
                             stMin = self.decode_stMin(rxPdu[FC_STMIN_INDEX])
                             currBlock = blockList.pop(0)
                             state = CanTpState.SEND_CONSECUTIVE_FRAME
@@ -222,7 +233,9 @@ class CanTp(iTp):
                             stMinTimer.start()
                             timeoutTimer.stop()
                         else:
-                            raise Exception("Unexpected Flow Control Continue to Send request")
+                            raise Exception(
+                                "Unexpected Flow Control Continue to Send request"
+                            )
                     else:
                         raise Exception("Unexpected fs response from ECU")
                 else:
@@ -230,37 +243,49 @@ class CanTp(iTp):
 
             if state == CanTpState.SEND_SINGLE_FRAME:
                 if len(payload) <= self.__minPduLength:
-                    txPdu[N_PCI_INDEX] += (CanTpMessageType.SINGLE_FRAME << 4)
+                    txPdu[N_PCI_INDEX] += CanTpMessageType.SINGLE_FRAME << 4
                     txPdu[SINGLE_FRAME_DL_INDEX] += payloadLength
-                    txPdu[SINGLE_FRAME_DATA_START_INDEX:] = fillArray(payload, self.__minPduLength)
+                    txPdu[SINGLE_FRAME_DATA_START_INDEX:] = fillArray(
+                        payload, self.__minPduLength
+                    )
                 else:
                     txPdu[N_PCI_INDEX] = 0
                     txPdu[FIRST_FRAME_DL_INDEX_LOW] = payloadLength
                     txPdu[FIRST_FRAME_DATA_START_INDEX:] = payload
-                data = self.transmit(txPdu, functionalReq, use_external_snd_rcv_functions)
+                data = self.transmit(
+                    txPdu, functionalReq, use_external_snd_rcv_functions
+                )
                 endOfMessage_flag = True
             elif state == CanTpState.SEND_FIRST_FRAME:
                 payloadLength_highNibble = (payloadLength & 0xF00) >> 8
-                payloadLength_lowNibble = (payloadLength & 0x0FF)
-                txPdu[N_PCI_INDEX] += (CanTpMessageType.FIRST_FRAME << 4)
+                payloadLength_lowNibble = payloadLength & 0x0FF
+                txPdu[N_PCI_INDEX] += CanTpMessageType.FIRST_FRAME << 4
                 txPdu[FIRST_FRAME_DL_INDEX_HIGH] += payloadLength_highNibble
                 txPdu[FIRST_FRAME_DL_INDEX_LOW] += payloadLength_lowNibble
-                txPdu[FIRST_FRAME_DATA_START_INDEX:] = payload[0:self.__maxPduLength - 1]
+                txPdu[FIRST_FRAME_DATA_START_INDEX:] = payload[
+                    0 : self.__maxPduLength - 1
+                ]
                 payloadPtr += self.__maxPduLength - 1
-                data = self.transmit(txPdu, functionalReq, use_external_snd_rcv_functions)
+                data = self.transmit(
+                    txPdu, functionalReq, use_external_snd_rcv_functions
+                )
                 timeoutTimer.start()
                 state = CanTpState.WAIT_FLOW_CONTROL
             elif state == CanTpState.SEND_CONSECUTIVE_FRAME:
-                if (stMinTimer.isExpired()):
-                    txPdu[N_PCI_INDEX] += (CanTpMessageType.CONSECUTIVE_FRAME << 4)
+                if stMinTimer.isExpired():
+                    txPdu[N_PCI_INDEX] += CanTpMessageType.CONSECUTIVE_FRAME << 4
                     txPdu[CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX] += sequenceNumber
-                    txPdu[CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX:] = currBlock.pop(0)
+                    txPdu[CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX:] = currBlock.pop(
+                        0
+                    )
                     payloadPtr += self.__maxPduLength
-                    data = self.transmit(txPdu, functionalReq, use_external_snd_rcv_functions)
+                    data = self.transmit(
+                        txPdu, functionalReq, use_external_snd_rcv_functions
+                    )
                     sequenceNumber = (sequenceNumber + 1) % 16
                     stMinTimer.restart()
-                    if (len(currBlock) == 0):
-                        if (len(blockList) == 0):
+                    if len(currBlock) == 0:
+                        if len(blockList) == 0:
                             endOfMessage_flag = True
                         else:
                             timeoutTimer.start()
@@ -287,7 +312,12 @@ class CanTp(iTp):
     # @param received_data the data that should be decoded in case of ITF Automation
     # @param use_external_snd_rcv_functions boolean to state if external sending and receiving functions shall be used
     # @return a list
-    def decode_isotp(self, timeout_s=1, received_data=None, use_external_snd_rcv_functions: bool = False):
+    def decode_isotp(
+        self,
+        timeout_s=1,
+        received_data=None,
+        use_external_snd_rcv_functions: bool = False,
+    ):
         timeoutTimer = ResettableTimer(timeout_s)
 
         payload = []
@@ -305,7 +335,10 @@ class CanTp(iTp):
         timeoutTimer.start()
         while endOfMessage_flag is False:
 
-            if use_external_snd_rcv_functions and state != CanTpState.RECEIVING_CONSECUTIVE_FRAME:
+            if (
+                use_external_snd_rcv_functions
+                and state != CanTpState.RECEIVING_CONSECUTIVE_FRAME
+            ):
                 rxPdu = received_data
             else:
                 rxPdu = self.getNextBufferedMessage()
@@ -319,22 +352,29 @@ class CanTp(iTp):
                 if state == CanTpState.IDLE:
                     if N_PCI == CanTpMessageType.SINGLE_FRAME:
                         payloadLength = rxPdu[N_PCI_INDEX & 0x0F]
-                        payload = rxPdu[SINGLE_FRAME_DATA_START_INDEX: SINGLE_FRAME_DATA_START_INDEX + payloadLength]
+                        payload = rxPdu[
+                            SINGLE_FRAME_DATA_START_INDEX : SINGLE_FRAME_DATA_START_INDEX
+                            + payloadLength
+                        ]
                         endOfMessage_flag = True
                     elif N_PCI == CanTpMessageType.FIRST_FRAME:
                         payload = rxPdu[FIRST_FRAME_DATA_START_INDEX:]
-                        payloadLength = ((rxPdu[FIRST_FRAME_DL_INDEX_HIGH] & 0x0F) << 8) + rxPdu[FIRST_FRAME_DL_INDEX_LOW]
+                        payloadLength = (
+                            (rxPdu[FIRST_FRAME_DL_INDEX_HIGH] & 0x0F) << 8
+                        ) + rxPdu[FIRST_FRAME_DL_INDEX_LOW]
                         payloadPtr = self.__maxPduLength - 1
                         state = CanTpState.SEND_FLOW_CONTROL
                 elif state == CanTpState.RECEIVING_CONSECUTIVE_FRAME:
                     if N_PCI == CanTpMessageType.CONSECUTIVE_FRAME:
-                        sequenceNumber = rxPdu[CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX] & 0x0F
+                        sequenceNumber = (
+                            rxPdu[CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX] & 0x0F
+                        )
                         if sequenceNumber != sequenceNumberExpected:
                             raise Exception("Consecutive frame sequence out of order")
                         else:
                             sequenceNumberExpected = (sequenceNumberExpected + 1) % 16
                         payload += rxPdu[CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX:]
-                        payloadPtr += (self.__maxPduLength)
+                        payloadPtr += self.__maxPduLength
                         timeoutTimer.restart()
                     else:
                         raise Exception("Unexpected PDU received")
@@ -376,7 +416,7 @@ class CanTp(iTp):
     # @return list, or None if nothing is on the receive list
     def getNextBufferedMessage(self):
         length = len(self.__recvBuffer)
-        if(length != 0):
+        if length != 0:
             return self.__recvBuffer.pop(0)
         else:
             return None
@@ -386,7 +426,7 @@ class CanTp(iTp):
     def callback_onReceive(self, msg):
         if self.__addressingType == CanTpAddressingTypes.NORMAL:
             if msg.arbitration_id == self.__resId:
-                self.__recvBuffer.append(msg.data[self.__pduStartIndex:])
+                self.__recvBuffer.append(msg.data[self.__pduStartIndex :])
         elif self.__addressingType == CanTpAddressingTypes.NORMAL_FIXED:
             raise Exception("I do not know how to receive this addressing type yet")
         elif self.__addressingType == CanTpAddressingTypes.MIXED:
@@ -403,13 +443,10 @@ class CanTp(iTp):
     # @brief function to decode the StMin parameter
     @staticmethod
     def decode_stMin(val):
-        if (val <= 0x7F):
+        if val <= 0x7F:
             time = val / 1000
             return time
-        elif (
-                (val >= 0xF1) &
-                (val <= 0xF9)
-        ):
+        elif (val >= 0xF1) & (val <= 0xF9):
             time = (val & 0x0F) / 10000
             return time
         else:
@@ -431,7 +468,7 @@ class CanTp(iTp):
         blockLength = blockSize * pduLength
 
         working = True
-        while(working):
+        while working:
             if (payloadPtr + pduLength) >= payloadLength:
                 working = False
                 currPdu = fillArray(payload[payloadPtr:], pduLength)
@@ -439,12 +476,12 @@ class CanTp(iTp):
                 blockList.append(currBlock)
 
             if working:
-                currPdu = payload[payloadPtr:payloadPtr+pduLength]
+                currPdu = payload[payloadPtr : payloadPtr + pduLength]
                 currBlock.append(currPdu)
                 payloadPtr += pduLength
                 blockPtr += pduLength
 
-                if(blockPtr == blockLength):
+                if blockPtr == blockLength:
                     blockList.append(currBlock)
                     currBlock = []
                     blockPtr = 0
@@ -453,16 +490,17 @@ class CanTp(iTp):
 
     ##
     # @brief transmits the data over can using can connection
-    def transmit(self, data, functionalReq=False, use_external_snd_rcv_functions: bool = False):
+    def transmit(
+        self, data, functionalReq=False, use_external_snd_rcv_functions: bool = False
+    ):
         # check functional request
         if functionalReq:
             raise Exception("Functional requests are currently not supported")
 
         transmitData = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 
-        if (
-            (self.__addressingType == CanTpAddressingTypes.NORMAL) |
-            (self.__addressingType == CanTpAddressingTypes.NORMAL_FIXED)
+        if (self.__addressingType == CanTpAddressingTypes.NORMAL) | (
+            self.__addressingType == CanTpAddressingTypes.NORMAL_FIXED
         ):
             transmitData = data
         elif self.__addressingType == CanTpAddressingTypes.MIXED:

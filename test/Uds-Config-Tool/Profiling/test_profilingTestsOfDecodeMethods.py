@@ -28,7 +28,9 @@ def do_cprofile(func):
             return result
         finally:
             profile.print_stats()
+
     return profiled_func
+
 
 # ----------------------------------------------------------------
 # buildIntFromList Tests
@@ -40,18 +42,20 @@ def buildIntFromListNonRecursiveFunc(aList):
     def buildIntFromList(aList):
         result = 0
         for i in range(0, len(aList)):
-            result += (aList[i] << (8 * (len(aList) - (i+1))))
+            result += aList[i] << (8 * (len(aList) - (i + 1)))
         return result
+
     return buildIntFromList(aList)
 
 
 @do_cprofile
 def buildIntFromListRecursiveFunc(aList):
     def buildIntFromList(aList):
-        if(len(aList) == 1):
+        if len(aList) == 1:
             return aList[0]
         else:
-            return (aList[0] << (8 * (len(aList) - 1) )) + buildIntFromList(aList[1:])
+            return (aList[0] << (8 * (len(aList) - 1))) + buildIntFromList(aList[1:])
+
     return buildIntFromList(aList)
 
 
@@ -59,6 +63,7 @@ def buildIntFromListRecursiveFunc(aList):
 def buildIntFromListReduceFunc(aList):
     def buildIntFromList(aList):
         return reduce(lambda x, y: (x << 8) + y, aList)
+
     return buildIntFromList(aList)
 
 
@@ -74,16 +79,18 @@ def byteListToStringNonRecursiveFunc(aList):
         for i in aList:
             result += chr(i)
         return result
+
     return byteListToString(aList)
 
 
 @do_cprofile
 def byteListToStringRecursiveFunc(aList):
     def byteListToString(aList):
-        if(len(aList) == 1):
+        if len(aList) == 1:
             return chr(aList[0])
         else:
             return chr(aList[0]) + byteListToString(aList[1:])
+
     return byteListToString(aList)
 
 
@@ -91,6 +98,7 @@ def byteListToStringRecursiveFunc(aList):
 def byteListToStringReduceFunc(aList):
     def byteListToString(aList):
         return reduce(lambda x, y: x + y, list(map(chr, aList)))
+
     return byteListToString(aList)
 
 
@@ -100,7 +108,7 @@ if __name__ == "__main__":
 
     testListA = []
     for i in range(0, 2500):
-        testListA.append(0x5a)
+        testListA.append(0x5A)
 
     testListB = []
     for i in range(0, 2500):
@@ -111,12 +119,12 @@ if __name__ == "__main__":
     resultB = buildIntFromListRecursiveFunc(testListA)
     resultC = buildIntFromListReduceFunc(testListA)
 
-    assert(resultA == resultB == resultC)
+    assert resultA == resultB == resultC
 
     print("Testing the byteListToString methods")
     resultA = byteListToStringNonRecursiveFunc(testListB)
     resultB = byteListToStringRecursiveFunc(testListB)
     resultC = byteListToStringReduceFunc(testListB)
 
-    assert (resultA == resultB == resultC)
+    assert resultA == resultB == resultC
     pass

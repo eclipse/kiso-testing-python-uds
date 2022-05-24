@@ -10,59 +10,81 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-from uds.uds_config_tool.FunctionCreation.iServiceMethodFactory import IServiceMethodFactory
-from uds.uds_config_tool.UtilityFunctions import getSdgsDataItem, getSdgsData, getShortName, getLongName, \
-                                                 getServiceIdFromDiagService, getParamWithSemantic, \
-                                                 getPositiveResponse, getDiagObjectProp, getBitLengthFromDop
 from math import ceil
+
+from uds.uds_config_tool.FunctionCreation.iServiceMethodFactory import (
+    IServiceMethodFactory,
+)
+from uds.uds_config_tool.UtilityFunctions import (
+    getBitLengthFromDop,
+    getDiagObjectProp,
+    getLongName,
+    getParamWithSemantic,
+    getPositiveResponse,
+    getSdgsData,
+    getSdgsDataItem,
+    getServiceIdFromDiagService,
+    getShortName,
+)
 
 ##
 # Inputs
 # Function name
 # expected security response
-requestFuncTemplate_getSeed = str("def {0}(suppressResponse=False):\n"
-                                  "    securityRequest = {2}\n"
-                                  "    if suppressResponse: securityRequest |= 0x80\n"
-                                  "    return [{1}, securityRequest]"
-                                  )
+requestFuncTemplate_getSeed = str(
+    "def {0}(suppressResponse=False):\n"
+    "    securityRequest = {2}\n"
+    "    if suppressResponse: securityRequest |= 0x80\n"
+    "    return [{1}, securityRequest]"
+)
 
-requestFuncTemplate_sendKey = str("def {0}(key, suppressResponse=False):\n"
-                                  "    serviceId = {1}\n"
-                                  "    subFunction = {2}\n"
-                                  "    if suppressResponse: subFunction |= 0x80\n"
-                                  "    return [serviceId, subFunction] + key")
+requestFuncTemplate_sendKey = str(
+    "def {0}(key, suppressResponse=False):\n"
+    "    serviceId = {1}\n"
+    "    subFunction = {2}\n"
+    "    if suppressResponse: subFunction |= 0x80\n"
+    "    return [serviceId, subFunction] + key"
+)
 
-checkSidTemplate = str("def {0}(sid):\n"
-                       "    expectedSid = {1}\n"
-                       "    if expectedSid != sid: raise Exception(\"SID do not match\")"
-                       )
+checkSidTemplate = str(
+    "def {0}(sid):\n"
+    "    expectedSid = {1}\n"
+    '    if expectedSid != sid: raise Exception("SID do not match")'
+)
 
-checkSecurityAccessTemplate = str("def {0}(securityAccess):\n"
-                                  "    expectedSecurityAccess = {1}\n"
-                                  "    if expectedSecurityAccess != securityAccess: raise Exception(\"Security Mode does not match\")"
-                                  )
+checkSecurityAccessTemplate = str(
+    "def {0}(securityAccess):\n"
+    "    expectedSecurityAccess = {1}\n"
+    '    if expectedSecurityAccess != securityAccess: raise Exception("Security Mode does not match")'
+)
 
-checkReturnedDataTemplate = str("def {0}(data):\n"
-                               "    expectedDataLength = {1}\n"
-                               "    if expectedDataLength != len(data): raise Exception(\"Returned data length not expected\")"
-                               )
+checkReturnedDataTemplate = str(
+    "def {0}(data):\n"
+    "    expectedDataLength = {1}\n"
+    '    if expectedDataLength != len(data): raise Exception("Returned data length not expected")'
+)
 
-checkNegativeResponseTemplate = str("def {0}(input):\n"
-                                   "    result = {{}}\n"
-                                   "    nrcList = {1}\n"
-                                   "    if input[0] == 0x7F:\n"
-                                   "        result['NRC'] = input[2]\n"
-                                   "        result['NRC_Label'] = nrcList.get(result['NRC'])\n"
-                                   "    return result")
+checkNegativeResponseTemplate = str(
+    "def {0}(input):\n"
+    "    result = {{}}\n"
+    "    nrcList = {1}\n"
+    "    if input[0] == 0x7F:\n"
+    "        result['NRC'] = input[2]\n"
+    "        result['NRC_Label'] = nrcList.get(result['NRC'])\n"
+    "    return result"
+)
 ##
 # inputs:
 # Length
-checkInputDataTemplate = str("def {0}(data):\n"
-                             "    expectedLength = {1}\n"
-                             "    if isinstance(data, list):\n"
-                             "        if len(data) != expectedLength: raise Exception(\"Input data does not match expected length\")\n"
-                             "    else:"
-                             "        pass")
+checkInputDataTemplate = str(
+    "def {0}(data):\n"
+    "    expectedLength = {1}\n"
+    "    if isinstance(data, list):\n"
+    '        if len(data) != expectedLength: raise Exception("Input data does not match expected length")\n'
+    "    else:"
+    "        pass"
+)
+
 
 class SecurityAccessMethodFactory(object):
 
@@ -76,7 +98,9 @@ class SecurityAccessMethodFactory(object):
         securityRequest = 0x00
 
         # have to dig out the sgds name for this one
-        requestElement = xmlElements[diagServiceElement.find('REQUEST-REF').attrib['ID-REF']]
+        requestElement = xmlElements[
+            diagServiceElement.find("REQUEST-REF").attrib["ID-REF"]
+        ]
 
         sdgsName = getSdgsDataItem(diagServiceElement, "DiagInstanceQualifier")
 
@@ -86,11 +110,23 @@ class SecurityAccessMethodFactory(object):
 
         # if accessMode is not none then this is a seed request
         if accessMode is not None:
-            securityRequest = int(getParamWithSemantic(requestElement, "ACCESSMODE").find("CODED-VALUE").text)
-            requestFuncString = requestFuncTemplate_getSeed.format(sdgsName, serviceId, securityRequest)
+            securityRequest = int(
+                getParamWithSemantic(requestElement, "ACCESSMODE")
+                .find("CODED-VALUE")
+                .text
+            )
+            requestFuncString = requestFuncTemplate_getSeed.format(
+                sdgsName, serviceId, securityRequest
+            )
         elif subfunction is not None:
-            securityRequest = int(getParamWithSemantic(requestElement, "SUBFUNCTION").find("CODED-VALUE").text)
-            requestFuncString = requestFuncTemplate_sendKey.format(sdgsName, serviceId, securityRequest)
+            securityRequest = int(
+                getParamWithSemantic(requestElement, "SUBFUNCTION")
+                .find("CODED-VALUE")
+                .text
+            )
+            requestFuncString = requestFuncTemplate_sendKey.format(
+                sdgsName, serviceId, securityRequest
+            )
         else:
             requestFuncString = None
 
@@ -110,11 +146,17 @@ class SecurityAccessMethodFactory(object):
         responseId = getServiceIdFromDiagService(diagServiceElement, xmlElements) + 0x40
         positiveResponseElement = getPositiveResponse(diagServiceElement, xmlElements)
 
-        diagInstanceQualifier = getSdgsDataItem(diagServiceElement, "DiagInstanceQualifier")
+        diagInstanceQualifier = getSdgsDataItem(
+            diagServiceElement, "DiagInstanceQualifier"
+        )
 
         checkSidFunctionName = "check_{0}_sid".format(diagInstanceQualifier)
-        checkSecurityAccessFunctionName = "check_{0}_securityAccess".format(diagInstanceQualifier)
-        checkReturnedDataFunctionName = "check_{0}_returnedData".format(diagInstanceQualifier)
+        checkSecurityAccessFunctionName = "check_{0}_securityAccess".format(
+            diagInstanceQualifier
+        )
+        checkReturnedDataFunctionName = "check_{0}_returnedData".format(
+            diagInstanceQualifier
+        )
 
         accessmode = getParamWithSemantic(positiveResponseElement, "ACCESSMODE")
         subfunction = getParamWithSemantic(positiveResponseElement, "SUBFUNCTION")
@@ -138,18 +180,20 @@ class SecurityAccessMethodFactory(object):
         else:
             payloadLength = 0
 
-        checkSidFunctionString = checkSidTemplate.format(checkSidFunctionName,
-                                                         responseId
-                                                         )
+        checkSidFunctionString = checkSidTemplate.format(
+            checkSidFunctionName, responseId
+        )
 
-        checkSecurityAccessFunctionString = checkSecurityAccessTemplate.format(checkSecurityAccessFunctionName,
-                                                                               securityRequest)
+        checkSecurityAccessFunctionString = checkSecurityAccessTemplate.format(
+            checkSecurityAccessFunctionName, securityRequest
+        )
 
         if payloadLength == 0:
             checkReturnedDataString = None
         else:
-            checkReturnedDataString = checkReturnedDataTemplate.format(checkReturnedDataFunctionName,
-                                                                       payloadLength)
+            checkReturnedDataString = checkReturnedDataTemplate.format(
+                checkReturnedDataFunctionName, payloadLength
+            )
             exec(checkReturnedDataString)
 
         exec(checkSidFunctionString)
@@ -178,35 +222,49 @@ class SecurityAccessMethodFactory(object):
     @staticmethod
     def create_checkNegativeResponseFunction(diagServiceElement, xmlElements):
 
-        diagInstanceQualifier = getSdgsDataItem(diagServiceElement, "DiagInstanceQualifier")
+        diagInstanceQualifier = getSdgsDataItem(
+            diagServiceElement, "DiagInstanceQualifier"
+        )
 
-        checkNegativeResponseFunctionName = "check_{0}_negResponse".format(diagInstanceQualifier)
+        checkNegativeResponseFunctionName = "check_{0}_negResponse".format(
+            diagInstanceQualifier
+        )
 
-        negativeResponsesElement = diagServiceElement.find('NEG-RESPONSE-REFS')
+        negativeResponsesElement = diagServiceElement.find("NEG-RESPONSE-REFS")
 
         negativeResponseChecks = []
 
         for negativeResponse in negativeResponsesElement:
-            negativeResponseRef = xmlElements[negativeResponse.attrib['ID-REF']]
+            negativeResponseRef = xmlElements[negativeResponse.attrib["ID-REF"]]
 
-            negativeResponseParams = negativeResponseRef.find('PARAMS')
+            negativeResponseParams = negativeResponseRef.find("PARAMS")
 
             for param in negativeResponseParams:
-                bytePosition = int(param.find('BYTE-POSITION').text)
+                bytePosition = int(param.find("BYTE-POSITION").text)
 
                 if bytePosition == 2:
                     nrcPos = bytePosition
                     expectedNrcDict = {}
                     try:
-                        dataObjectElement = xmlElements[(param.find('DOP-REF')).attrib['ID-REF']]
-                        nrcList = dataObjectElement.find('COMPU-METHOD').find('COMPU-INTERNAL-TO-PHYS').find('COMPU-SCALES')
+                        dataObjectElement = xmlElements[
+                            (param.find("DOP-REF")).attrib["ID-REF"]
+                        ]
+                        nrcList = (
+                            dataObjectElement.find("COMPU-METHOD")
+                            .find("COMPU-INTERNAL-TO-PHYS")
+                            .find("COMPU-SCALES")
+                        )
                         for nrcElem in nrcList:
-                            expectedNrcDict[int(nrcElem.find('UPPER-LIMIT').text)] = nrcElem.find('COMPU-CONST').find('VT').text
+                            expectedNrcDict[int(nrcElem.find("UPPER-LIMIT").text)] = (
+                                nrcElem.find("COMPU-CONST").find("VT").text
+                            )
                     except:
                         pass
                 pass
 
-        checkNegativeResponseFunctionString = checkNegativeResponseTemplate.format(checkNegativeResponseFunctionName, expectedNrcDict)
+        checkNegativeResponseFunctionString = checkNegativeResponseTemplate.format(
+            checkNegativeResponseFunctionName, expectedNrcDict
+        )
         exec(checkNegativeResponseFunctionString)
 
         return locals()[checkNegativeResponseFunctionName]
@@ -214,7 +272,9 @@ class SecurityAccessMethodFactory(object):
     @staticmethod
     def check_inputDataFunction(diagServiceElement, xmlElements):
 
-        diagInstanceQualifier = getSdgsDataItem(diagServiceElement, "DiagInstanceQualifier")
+        diagInstanceQualifier = getSdgsDataItem(
+            diagServiceElement, "DiagInstanceQualifier"
+        )
 
 
 if __name__ == "__main__":

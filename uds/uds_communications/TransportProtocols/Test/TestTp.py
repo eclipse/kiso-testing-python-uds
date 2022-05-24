@@ -10,6 +10,8 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 from uds import iTp
+
+
 ##
 # @brief pads out an array with a fill value
 def fillArray(data, length, fillValue=0):
@@ -41,4 +43,6 @@ class TestTp(object):
     # @brief recv method
     # raises exception
     def recv(self, timeout_s):
-        raise NotImplemented("Test recv should not be implemented directly, only mocked")
+        raise NotImplemented(
+            "Test recv should not be implemented directly, only mocked"
+        )

@@ -11,11 +11,11 @@ __status__ = "Development"
 
 
 from time import perf_counter
+
 from uds.uds_communications.Utilities.iResettableTimer import iResettableTimer
 
 
 class ResettableTimer(iResettableTimer):
-
     def __init__(self, timeoutTime=0):
 
         self.__timeoutTime = timeoutTime
@@ -52,7 +52,7 @@ class ResettableTimer(iResettableTimer):
         return self.__expired_flag
 
     def __timerCheck(self):
-        if (self.__active_flag):
+        if self.__active_flag:
             currTime = perf_counter()
             if (currTime - self.__startTime) > self.__timeoutTime:
                 self.__expired_flag = True

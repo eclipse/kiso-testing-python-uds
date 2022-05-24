@@ -1,12 +1,12 @@
-
-from uds.uds_config_tool.FunctionCreation.SecurityAccessMethodFactory import SecurityAccessMethodFactory
+from uds.uds_config_tool.FunctionCreation.SecurityAccessMethodFactory import (
+    SecurityAccessMethodFactory,
+)
 from uds.uds_config_tool.UtilityFunctions import getSdgsDataItem
-
 
 if __name__ == "__main__":
 
-    import xml.etree.ElementTree as ET
     import inspect
+    import xml.etree.ElementTree as ET
 
     filename = "Bootloader.odx"
 
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     for child in root.iter():
         currTag = child.tag
         try:
-            xmlElements[child.attrib['ID']] = child
+            xmlElements[child.attrib["ID"]] = child
         except KeyError:
             pass
 
@@ -28,7 +28,13 @@ if __name__ == "__main__":
 
                 suppressResponse = getSdgsDataItem(value, "PositiveResponseSuppressed")
                 if suppressResponse == "no":
-                    a = SecurityAccessMethodFactory.create_requestFunction(value, xmlElements)
-                    b = SecurityAccessMethodFactory.create_checkPositiveResponseFunction(value, xmlElements)
-                    c = SecurityAccessMethodFactory.create_checkNegativeResponseFunction(value, xmlElements)
+                    a = SecurityAccessMethodFactory.create_requestFunction(
+                        value, xmlElements
+                    )
+                    b = SecurityAccessMethodFactory.create_checkPositiveResponseFunction(
+                        value, xmlElements
+                    )
+                    c = SecurityAccessMethodFactory.create_checkNegativeResponseFunction(
+                        value, xmlElements
+                    )
                 pass

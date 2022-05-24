@@ -1,12 +1,15 @@
-from uds import Uds
-from can import Bus, Listener, Notifier
 from time import sleep
+
+from can import Bus, Listener, Notifier
+
+from uds import Uds
+
 
 def callback_onReceive(msg):
 
-    if(msg.arbitration_id == 0x600):
+    if msg.arbitration_id == 0x600:
         print("Bootloader Receive:", list(msg.data))
-    if(msg.arbitration_id == 0x7E0):
+    if msg.arbitration_id == 0x7E0:
         print("PCM Receive:", list(msg.data))
 
 
@@ -21,7 +24,6 @@ if __name__ == "__main__":
 
     a = Uds()
 
-    a.send([0x22, 0xf1, 0x8C], responseRequired=False)
+    a.send([0x22, 0xF1, 0x8C], responseRequired=False)
 
     sleep(2)
-

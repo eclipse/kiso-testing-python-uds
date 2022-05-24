@@ -12,10 +12,12 @@ __status__ = "Development"
 
 from enum import Enum, IntEnum
 
+
 class IsoDidNames(Enum):
 
     bootSoftwareIdentification = "bootSoftwareIdentification"
     applicationSoftwareIdentification = "applicationSoftwareIdentification"
+
 
 class IsoServices(IntEnum):
 
@@ -45,7 +47,7 @@ class IsoServices(IntEnum):
     TransferData = 0x36
     RequestTransferExit = 0x37
 
-	
+
 class IsoRoutineControlType(IntEnum):
 
     startRoutine = 0x01
@@ -83,21 +85,19 @@ class IsoReadDTCSubfunction(IntEnum):
     reportNumberOfEmissionsRelatedOBDDTCByStatusMask = 0x12
     reportEmissionsRelatedOBDDTCByStatusMask = 0x13
 
-	
+
 class IsoReadDTCStatusMask(IntEnum):
 
     testFailed = 0x01
-    testFailedThisMonitoringCycle = 0x02         # ... reserved
-    pendingDtc = 0x04                            # ... reserved
+    testFailedThisMonitoringCycle = 0x02  # ... reserved
+    pendingDtc = 0x04  # ... reserved
     confirmedDtc = 0x08
     testNotCompletedSinceLastClear = 0x10
     testFailedSinceLastClear = 0x20
     testNotCompletedThisMonitoringCycle = 0x40
-    warningIndicatorRequested = 0x80             # ... reserved
+    warningIndicatorRequested = 0x80  # ... reserved
 
 
 class IsoDataFormatIdentifier(IntEnum):
 
     noCompressionMethod = 0x00  # ... for use during request download - all other values are manufacturer specific
-
-	

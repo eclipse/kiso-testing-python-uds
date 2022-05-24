@@ -10,14 +10,15 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-import can
 from threading import Thread
-from time import time, sleep
+from time import sleep, time
+
+import can
+
 from uds import Uds
 
-
 recvBuffer = []
-bus = can.interface.Bus('virtualInterface', bustype='virtual')
+bus = can.interface.Bus("virtualInterface", bustype="virtual")
 
 
 def clearReceiveBuffer():
@@ -32,9 +33,11 @@ def getNextReceivedMessage():
     else:
         return recvBuffer.pop(0)
 
+
 def onReceiveCallback(msg):
     global recvBuffer
     recvBuffer.append(msg.data)
+
 
 def singleFrameResponse_target():
 
@@ -57,6 +60,7 @@ def singleFrameResponse_target():
             canMsg.data = [0x04, 0x62, 0xF1, 0x8C, 0x01]
             bus.send(canMsg)
             working = False
+
 
 def multiFrameResponse_target():
 
@@ -115,7 +119,7 @@ if __name__ == "__main__":
     a = udsConnection.send([0x22, 0xF1, 0x8C])
     print(a)
 
-    while(receiveThread.is_alive()):
+    while receiveThread.is_alive():
         pass
 
     print("Test 2")
@@ -125,5 +129,5 @@ if __name__ == "__main__":
     a = udsConnection.send([0x22, 0xF1, 0x8C])
     print(a)
 
-    while(receiveThread.is_alive()):
+    while receiveThread.is_alive():
         pass

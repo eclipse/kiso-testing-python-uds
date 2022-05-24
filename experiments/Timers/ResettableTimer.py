@@ -1,11 +1,12 @@
 """This file is an experiment and should not be used for any serious coding"""
 
-from .iTimer import ITimer
-from time import perf_counter
 import gc
+from time import perf_counter
+
+from .iTimer import ITimer
+
 
 class ResettableTimer(ITimer):
-
     def __init__(self, timeout=0):
 
         self.__timeout = timeout
@@ -27,7 +28,7 @@ class ResettableTimer(ITimer):
         self.__active_flag = False
 
     def isExpired(self):
-        if(self.__active_flag):
+        if self.__active_flag:
             if (perf_counter() - self.__startTime) > self.__timeout:
                 self.__active_flag = False
                 self.__expired_flag = True
@@ -47,7 +48,7 @@ if __name__ == "__main__":
     for i in range(0, 10000):
         startTime = perf_counter()
         a.start()
-        while (a.isExpired() == False):
+        while a.isExpired() == False:
             pass
         endTime = perf_counter()
         delta = endTime - startTime
@@ -55,4 +56,4 @@ if __name__ == "__main__":
 
     print("Min: {0}".format(min(results)))
     print("Max: {0}".format(max(results)))
-    print("Avg: {0}".format(sum(results)/len(results)))
+    print("Avg: {0}".format(sum(results) / len(results)))

@@ -10,8 +10,9 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 from types import MethodType
+
+from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 
 
 class InputOutputControlContainer(object):
@@ -32,21 +33,35 @@ class InputOutputControlContainer(object):
     def __inputOutputControl(target, parameter, optionRecord, dataRecord, **kwargs):
 
         # Note: inputOutputControl does not show support for multiple DIDs in the spec, so this is handling only a single DID with data record.
-        requestFunction = target.inputOutputControlContainer.requestFunctions["{0}[{1}]".format(parameter,optionRecord)]
-        checkFunction = target.inputOutputControlContainer.checkFunctions["{0}[{1}]".format(parameter,optionRecord)]
-        negativeResponseFunction = target.inputOutputControlContainer.negativeResponseFunctions["{0}[{1}]".format(parameter,optionRecord)]
-        positiveResponseFunction = target.inputOutputControlContainer.positiveResponseFunctions["{0}[{1}]".format(parameter,optionRecord)]
+        requestFunction = target.inputOutputControlContainer.requestFunctions[
+            "{0}[{1}]".format(parameter, optionRecord)
+        ]
+        checkFunction = target.inputOutputControlContainer.checkFunctions[
+            "{0}[{1}]".format(parameter, optionRecord)
+        ]
+        negativeResponseFunction = (
+            target.inputOutputControlContainer.negativeResponseFunctions[
+                "{0}[{1}]".format(parameter, optionRecord)
+            ]
+        )
+        positiveResponseFunction = (
+            target.inputOutputControlContainer.positiveResponseFunctions[
+                "{0}[{1}]".format(parameter, optionRecord)
+            ]
+        )
 
         # Call the sequence of functions to execute the inputOutputControl request/response action ...
         # ==============================================================================
 
-        # Create the request. Note: we do not have to pre-check the dataRecord as this action is performed by 
+        # Create the request. Note: we do not have to pre-check the dataRecord as this action is performed by
         # the recipient (the response codes 0x13 and 0x31 provide the necessary cover of errors in the request) ...
         request = requestFunction(dataRecord)
 
         # Send request and receive the response ...
-        response = target.send(request) # ... this returns a single response
-        nrc = negativeResponseFunction(response)  # ... return nrc value if a negative response is received
+        response = target.send(request)  # ... this returns a single response
+        nrc = negativeResponseFunction(
+            response
+        )  # ... return nrc value if a negative response is received
         if nrc:
             return nrc
 
@@ -57,7 +72,9 @@ class InputOutputControlContainer(object):
         return positiveResponseFunction(response)
 
     def bind_function(self, bindObject):
-        bindObject.inputOutputControl = MethodType(self.__inputOutputControl, bindObject)
+        bindObject.inputOutputControl = MethodType(
+            self.__inputOutputControl, bindObject
+        )
 
     def add_requestFunction(self, aFunction, dictionaryEntry):
         self.requestFunctions[dictionaryEntry] = aFunction

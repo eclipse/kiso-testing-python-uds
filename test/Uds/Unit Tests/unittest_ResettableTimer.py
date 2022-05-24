@@ -11,8 +11,9 @@ __status__ = "Development"
 
 
 import unittest
+from time import perf_counter, sleep
+
 from uds import ResettableTimer
-from time import sleep, perf_counter
 
 
 class CanTpMessageTestCase(unittest.TestCase):
@@ -104,7 +105,7 @@ class CanTpMessageTestCase(unittest.TestCase):
             a = ResettableTimer(i)
             startTime = perf_counter()
             a.start()
-            while(a.isRunning()):
+            while a.isRunning():
                 pass
             endTime = perf_counter()
             delta = endTime - startTime

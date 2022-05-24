@@ -12,8 +12,8 @@ __status__ = "Development"
 
 from abc import ABCMeta, abstractmethod
 
-class iContainer(ABCMeta):
 
+class iContainer(ABCMeta):
     @abstractmethod
     def add_requestFunction(self, aFunction, dictionaryEntry):
         raise NotImplementedError("add_requestFucntion not implemented")

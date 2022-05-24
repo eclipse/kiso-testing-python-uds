@@ -10,8 +10,9 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 from types import MethodType
+
+from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 
 
 class TransferExitContainer(object):
@@ -23,7 +24,6 @@ class TransferExitContainer(object):
         self.checkFunctions = {}
         self.negativeResponseFunctions = {}
         self.positiveResponseFunctions = {}
- 
 
     ##
     # @brief this method is bound to an external Uds object, referenced by target, so that it can be called
@@ -33,21 +33,29 @@ class TransferExitContainer(object):
     def __transferExit(target, transferRequestParameterRecord=None, **kwargs):
 
         # Note: TransferExit does not show support for multiple DIDs in the spec, so this is handling only a single DID with data record.
-        requestFunction = target.transferExitContainer.requestFunctions['TransferExit']
-        checkFunction = target.transferExitContainer.checkFunctions['TransferExit']
-        negativeResponseFunction = target.transferExitContainer.negativeResponseFunctions['TransferExit']
-        positiveResponseFunction = target.transferExitContainer.positiveResponseFunctions['TransferExit']
+        requestFunction = target.transferExitContainer.requestFunctions["TransferExit"]
+        checkFunction = target.transferExitContainer.checkFunctions["TransferExit"]
+        negativeResponseFunction = (
+            target.transferExitContainer.negativeResponseFunctions["TransferExit"]
+        )
+        positiveResponseFunction = (
+            target.transferExitContainer.positiveResponseFunctions["TransferExit"]
+        )
 
         # Call the sequence of functions to execute the ECU Reset request/response action ...
         # ==============================================================================
 
-        # Create the request. Note: we do not have to pre-check the dataRecord as this action is performed by 
+        # Create the request. Note: we do not have to pre-check the dataRecord as this action is performed by
         # the recipient (the response codes 0x?? and 0x?? provide the necessary cover of errors in the request) ...
         request = requestFunction(transferRequestParameterRecord)
 
         # Send request and receive the response ...
-        response = target.send(request,responseRequired=True) # ... this returns a single response
-        nrc = negativeResponseFunction(response)  # ... return nrc value if a negative response is received
+        response = target.send(
+            request, responseRequired=True
+        )  # ... this returns a single response
+        nrc = negativeResponseFunction(
+            response
+        )  # ... return nrc value if a negative response is received
         if nrc:
             return nrc
 
@@ -57,18 +65,25 @@ class TransferExitContainer(object):
         # All is still good, so return the response (currently this function does nothing, but including it here as a hook in case that changes) ...
         return positiveResponseFunction(response)
 
-
     def bind_function(self, bindObject):
         bindObject.transferExit = MethodType(self.__transferExit, bindObject)
 
-    def add_requestFunction(self, aFunction, dictionaryEntry):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
-        self.requestFunctions['TransferExit'] = aFunction
+    def add_requestFunction(
+        self, aFunction, dictionaryEntry
+    ):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
+        self.requestFunctions["TransferExit"] = aFunction
 
-    def add_checkFunction(self, aFunction, dictionaryEntry):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
-        self.checkFunctions['TransferExit'] = aFunction
+    def add_checkFunction(
+        self, aFunction, dictionaryEntry
+    ):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
+        self.checkFunctions["TransferExit"] = aFunction
 
-    def add_negativeResponseFunction(self, aFunction, dictionaryEntry):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
-        self.negativeResponseFunctions['TransferExit'] = aFunction
+    def add_negativeResponseFunction(
+        self, aFunction, dictionaryEntry
+    ):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
+        self.negativeResponseFunctions["TransferExit"] = aFunction
 
-    def add_positiveResponseFunction(self, aFunction, dictionaryEntry):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
-        self.positiveResponseFunctions['TransferExit'] = aFunction
+    def add_positiveResponseFunction(
+        self, aFunction, dictionaryEntry
+    ):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
+        self.positiveResponseFunctions["TransferExit"] = aFunction

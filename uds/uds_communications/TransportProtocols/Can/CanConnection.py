@@ -11,16 +11,17 @@ __status__ = "Development"
 
 
 import can
+
 from uds import fillArray
+
 
 ##
 # @class CanListener
 # @brief This is used due to new implementation of python-can 4.0.0 version
 #
-# Just create a Listener inherit from can.listener(abstract class) and 
+# Just create a Listener inherit from can.listener(abstract class) and
 # define the needed method on_message_received
 class CanListener(can.Listener):
-
     def __init__(self):
         super().__init__()
 
@@ -29,10 +30,11 @@ class CanListener(can.Listener):
     # by callback parameter from CanConnection constructor
     def on_message_received(self):
         pass
+
+
 ##
 # @brief Small class to wrap the CAN Bus/Notifier/Listeners to allow multiple clients for each bus/connection
 class CanConnection(object):
-
     def __init__(self, callback, filter, bus, is_external=False):
         self.__bus = bus
         self.__is_external = is_external
@@ -66,7 +68,7 @@ class CanConnection(object):
     def transmit(self, data, reqId, extended=False):
         canMsg = can.Message(arbitration_id=reqId, is_extended_id=extended)
         canMsg.dlc = len(data)
-        
+
         canMsg.data = data
         canMsg.is_fd = True
 
@@ -78,6 +80,6 @@ class CanConnection(object):
             self.__bus.reset()
             self.__bus.shutdown()
             self.__bus = None
-    
+
     def get_bus(self):
         return self.__bus

@@ -11,18 +11,17 @@ __status__ = "Development"
 
 
 import unittest
-from uds import Uds
 from unittest import mock
+
+from uds import Uds
 
 
 class UdsTestCase(unittest.TestCase):
 
     # these are inserted in reverse order to what you'd expect
-    @mock.patch('uds.TestTp.send')
-    @mock.patch('uds.TestTp.recv')
-    def test_udsSendWithResponse(self,
-                     tp_recv,
-                     tp_send):
+    @mock.patch("uds.TestTp.send")
+    @mock.patch("uds.TestTp.recv")
+    def test_udsSendWithResponse(self, tp_recv, tp_send):
 
         tp_send.return_value = False
         tp_recv.return_value = [0x50, 0x01]

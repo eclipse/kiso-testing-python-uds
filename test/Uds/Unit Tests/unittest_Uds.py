@@ -19,11 +19,9 @@ from uds import Uds
 class UdsTestCase(unittest.TestCase):
 
     # these are inserted in reverse order to what you'd expect
-    @mock.patch('uds.TestTp.recv')
-    @mock.patch('uds.TestTp.send')
-    def test_udsSendWithResponse(self,
-                                 testTp_send,
-                                 testTp_recv):
+    @mock.patch("uds.TestTp.recv")
+    @mock.patch("uds.TestTp.send")
+    def test_udsSendWithResponse(self, testTp_send, testTp_recv):
 
         testTp_send.return_value = False
         testTp_recv.return_value = [0x50, 0x01]
@@ -35,9 +33,8 @@ class UdsTestCase(unittest.TestCase):
         self.assertEqual([0x50, 0x01], a)
 
     # these are inserted in reverse order to what you'd expect
-    @mock.patch('uds.TestTp.send')  # 2
-    def test_udsSendWithoutResponse(self,
-                                    testTp_send):
+    @mock.patch("uds.TestTp.send")  # 2
+    def test_udsSendWithoutResponse(self, testTp_send):
 
         testTp_send.return_value = False
 
@@ -48,9 +45,8 @@ class UdsTestCase(unittest.TestCase):
         self.assertEqual(None, None)
 
     # these are inserted in reverse order to what you'd expect
-    @mock.patch('uds.TestTp.send')  # 2
-    def test_udsSendFunctionalRequest(self,
-                                      testTp_send):
+    @mock.patch("uds.TestTp.send")  # 2
+    def test_udsSendFunctionalRequest(self, testTp_send):
         testTp_send.return_value = False
 
         udsConnection = Uds(transportProtocol="TEST")
@@ -58,6 +54,7 @@ class UdsTestCase(unittest.TestCase):
         a = udsConnection.send([0x10, 0x01], functionalReq=True)
 
         self.assertEqual(None, None)
+
 
 if __name__ == "__main__":
     unittest.main()
