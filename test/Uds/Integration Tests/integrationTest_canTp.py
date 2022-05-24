@@ -11,9 +11,9 @@ __status__ = "Development"
 
 
 from threading import Thread
-from uds import CanTp
 from time import sleep
 
+from uds import CanTp
 
 if __name__ == "__main__":
 
@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
         a = receiver.recv(100)
 
-        #print(a)
+        # print(a)
         print(len(a))
 
     receiverThread = Thread(target=receiverFunc)

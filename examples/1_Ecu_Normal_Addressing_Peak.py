@@ -10,4 +10,6 @@ if __name__ == "__main__":
 
     ## transmit a request for ECU Serial Number
     SerialNumber = a.send([0x22, 0xF1, 0x8C])
-    print(SerialNumber) # this will vary depending on the ECU, but should start with [0x6E, 0xF1, 0x8C]
+    print(
+        SerialNumber
+    )  # this will vary depending on the ECU, but should start with [0x6E, 0xF1, 0x8C]

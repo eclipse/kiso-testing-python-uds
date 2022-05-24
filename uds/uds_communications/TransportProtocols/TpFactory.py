@@ -10,18 +10,16 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-from uds import Config
-from uds import CanTp
-from uds import LinTp
-from uds import TestTp
 from os import path
+
+from uds import CanTp, Config, LinTp, TestTp
 
 
 ##
 # @brief class for creating Tp objects
 class TpFactory(object):
 
-    configType = ''
+    configType = ""
     configParameters = []
 
     config = None
@@ -31,19 +29,19 @@ class TpFactory(object):
     @staticmethod
     def __call__(tpType, configPath=None, **kwargs):
 
-        #TpFactory.loadConfiguration(configPath)
+        # TpFactory.loadConfiguration(configPath)
 
-        if(tpType == "CAN"):
+        if tpType == "CAN":
             return CanTp(configPath=configPath, **kwargs)
-        elif(tpType == "DoIP"):
+        elif tpType == "DoIP":
             raise NotImplementedError("DoIP transport not currently supported")
-        elif(tpType == "K-LINE"):
+        elif tpType == "K-LINE":
             raise NotImplementedError("K-Line Transport not currently supported")
-        elif(tpType == "LIN"):
+        elif tpType == "LIN":
             return LinTp(configPath=configPath, **kwargs)
-        elif(tpType == "FLEXRAY"):
+        elif tpType == "FLEXRAY":
             raise NotImplementedError("FlexRay Transport not currently supported")
-        elif(tpType == "TEST"):
+        elif tpType == "TEST":
             return TestTp()
         else:
             raise Exception("Unknown transport type selected")
@@ -51,7 +49,7 @@ class TpFactory(object):
     @staticmethod
     def loadConfiguration(configPath=None):
 
-        #load the base config
+        # load the base config
         baseConfig = path.dirname(__file__) + "/config.ini"
         config = Config()
         if path.exists(baseConfig):

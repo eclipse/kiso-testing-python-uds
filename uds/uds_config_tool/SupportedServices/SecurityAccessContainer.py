@@ -10,8 +10,9 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 from types import MethodType
+
+from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 
 
 class SecurityAccessContainer(object):
@@ -28,22 +29,31 @@ class SecurityAccessContainer(object):
     def __securityAccess(target, parameter, key=None, suppressResponse=False):
 
         requestFunction = target.securityAccessContainer.requestFunctions[parameter]
-        checkNegativeResponseFunction = target.securityAccessContainer.negativeResponseFunctions[parameter]
-        checkPositiveResponseFunctions = target.securityAccessContainer.positiveResponseFunctions[parameter]
+        checkNegativeResponseFunction = (
+            target.securityAccessContainer.negativeResponseFunctions[parameter]
+        )
+        checkPositiveResponseFunctions = (
+            target.securityAccessContainer.positiveResponseFunctions[parameter]
+        )
         checkSidFunction = checkPositiveResponseFunctions[0]
         checkSecurityAccessFunction = checkPositiveResponseFunctions[1]
         checkDataFunction = checkPositiveResponseFunctions[2]
 
         # if the key is not none then we are sending a key back to the ECU check the key type
         if key is not None:
-            #check key format
+            # check key format
             # send request for key response
-            response = target.send(requestFunction(key, suppressResponse), responseRequired=not(suppressResponse))
+            response = target.send(
+                requestFunction(key, suppressResponse),
+                responseRequired=not (suppressResponse),
+            )
         else:
             response = target.send(requestFunction(suppressResponse))
-        
+
         if suppressResponse is False:
-            nrc = checkNegativeResponseFunction(response) # ... return nrc value if a negative response is received
+            nrc = checkNegativeResponseFunction(
+                response
+            )  # ... return nrc value if a negative response is received
             if nrc:
                 return nrc
 

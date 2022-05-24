@@ -1,22 +1,39 @@
-from uds import createUdsConnection
-from uds import ihexFile
-from struct import pack, unpack
 import hashlib
+from struct import pack, unpack
 from time import sleep, time
-from uds import DecodeFunctions
+
+from uds import DecodeFunctions, createUdsConnection, ihexFile
 
 
 def calculateKeyFromSeed(seed, ecuKey):
 
-    deviceSecret = [0x46, 0x45, 0x44, 0x43, 0x42, 0x41, 0x39, 0x38, 0x37, 0x36, 0x35, 0x34, 0x33, 0x32, 0x31, 0x30]
+    deviceSecret = [
+        0x46,
+        0x45,
+        0x44,
+        0x43,
+        0x42,
+        0x41,
+        0x39,
+        0x38,
+        0x37,
+        0x36,
+        0x35,
+        0x34,
+        0x33,
+        0x32,
+        0x31,
+        0x30,
+    ]
 
     md5Input = deviceSecret + seed + deviceSecret
-    c = pack('%sB' % len(md5Input), *md5Input)
+    c = pack("%sB" % len(md5Input), *md5Input)
     d = hashlib.md5(c).digest()
-    dUnpack = unpack('%sB' % 16, d)
+    dUnpack = unpack("%sB" % 16, d)
     sendList = [val for val in dUnpack]
 
     return sendList
+
 
 if __name__ == "__main__":
 
@@ -24,7 +41,9 @@ if __name__ == "__main__":
 
     app = ihexFile("e400_uds_test_app_e400.ihex")
 
-    e400 = createUdsConnection("Bootloader.odx", "Bootloader", reqId=0x601, resId=0x651, interface="peak")
+    e400 = createUdsConnection(
+        "Bootloader.odx", "Bootloader", reqId=0x601, resId=0x651, interface="peak"
+    )
 
     a = e400.readDataByIdentifier("ECU Serial Number")
     print("Serial Number: {0}".format(a["ECU Serial Number"]))
@@ -63,27 +82,37 @@ if __name__ == "__main__":
     a = e400.transferExit()
 
     print("Jumping to Secondary Bootloader")
-    a = e400.routineControl("Start Secondary Bootloader", 1, [DecodeFunctions.buildIntFromList(transmitAddress)])
+    a = e400.routineControl(
+        "Start Secondary Bootloader",
+        1,
+        [DecodeFunctions.buildIntFromList(transmitAddress)],
+    )
     # print(a)
-
 
     print("In Secondary Bootloader")
     print("Erasing Memory")
 
     transmitAddress = app.transmitAddress
     transmitLength = app.transmitLength
-    a = e400.routineControl("Erase Memory", 1, [("memoryAddress", [DecodeFunctions.buildIntFromList(transmitAddress)]), ("memorySize", [DecodeFunctions.buildIntFromList(transmitLength)])])
+    a = e400.routineControl(
+        "Erase Memory",
+        1,
+        [
+            ("memoryAddress", [DecodeFunctions.buildIntFromList(transmitAddress)]),
+            ("memorySize", [DecodeFunctions.buildIntFromList(transmitLength)]),
+        ],
+    )
     # print(a)
 
     working = True
     while working:
 
         a = e400.routineControl("Erase Memory", 3)
-        #print(a)
-        if(a['Erase Memory Status']) == [0x30]:
+        # print(a)
+        if (a["Erase Memory Status"]) == [0x30]:
             print("Erased memory")
             working = False
-        elif(a['Erase Memory Status'] == [0x31]):
+        elif a["Erase Memory Status"] == [0x31]:
             print("ABORTED")
             raise Exception("Erase memory unsuccessful")
         sleep(0.001)
@@ -101,7 +130,6 @@ if __name__ == "__main__":
 
         for j in range(0, len(chunks)):
             a = e400.transferData(j + 1, chunks[j])
-
 
     # for i in range(0, len(chunks)):
     #
@@ -132,10 +160,9 @@ if __name__ == "__main__":
             working = False
             print("Aborted")
         elif routineStatus == 0x32:
-            #print("Working")
+            # print("Working")
             pass
 
         sleep(0.01)
-
 
     e400.ecuReset("Hard Reset", suppressResponse=True)

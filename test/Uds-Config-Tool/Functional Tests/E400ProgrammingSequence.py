@@ -1,11 +1,11 @@
-from uds import createUdsConnection
-from struct import pack, unpack
 import hashlib
+from struct import pack, unpack
 from time import sleep, time
+
+from uds import createUdsConnection
 
 
 class ihexData(object):
-
     def __init__(self):
 
         self.__startAddress = 0
@@ -36,10 +36,9 @@ class ihexData(object):
 
 
 class ihexFile(object):
-
     def __init__(self, filename=None, padding=0xFF, continuousBlocking=True):
 
-        hexFile = open(filename, 'r')
+        hexFile = open(filename, "r")
 
         self.__blocks = []
 
@@ -65,25 +64,27 @@ class ihexFile(object):
             index = 0
             dataLength = lineArray[index]
             index += 1
-            address = (lineArray[index] << 8) | (lineArray[index+1])
+            address = (lineArray[index] << 8) | (lineArray[index + 1])
             index += 2
             recordType = lineArray[index]
             index += 1
-            data = lineArray[index: index+dataLength]
+            data = lineArray[index : index + dataLength]
             index += dataLength
             checksum = lineArray[index]
 
             calculatedChecksum = 0
 
-            for i in range(len(lineArray)-1):
+            for i in range(len(lineArray) - 1):
                 calculatedChecksum = (calculatedChecksum + lineArray[i]) % 256
 
-            calculatedChecksum = ( ~calculatedChecksum + 1 ) %256
+            calculatedChecksum = (~calculatedChecksum + 1) % 256
 
             if calculatedChecksum != checksum:
-                raise Exception("Checksum on line {0} does not match. Actual: {1}, Calculated: {2}".format(linecount,
-                                                                                                           checksum,
-                                                                                                           calculatedChecksum))
+                raise Exception(
+                    "Checksum on line {0} does not match. Actual: {1}, Calculated: {2}".format(
+                        linecount, checksum, calculatedChecksum
+                    )
+                )
 
             # print("Length: {0:#x}, Address: {1:#x}, recordType: {2:#x}, data: {3}, checksum: {4:#x}, calculatedChecksum: {5:#x}".format(dataLength,
             #                                                                                                                             address,
@@ -91,8 +92,6 @@ class ihexFile(object):
             #                                                                                                                             data,
             #                                                                                                                             checksum,
             #                                                                                                                             calculatedChecksum))
-
-
 
             if recordType == 0x00:
                 if currentAddress is None:
@@ -102,7 +101,10 @@ class ihexFile(object):
                     if address != nextAddress:
                         if continuousBlocking:
                             paddingBlock = []
-                            [paddingBlock.append(padding) for i in range(0, address-nextAddress)]
+                            [
+                                paddingBlock.append(padding)
+                                for i in range(0, address - nextAddress)
+                            ]
                             currentBlock.addData(paddingBlock)
                         else:
                             # print("new block")
@@ -110,8 +112,6 @@ class ihexFile(object):
                 currentBlock.addData(data)
                 currentAddress = address
                 nextAddress = address + dataLength
-
-
 
             elif recordType == 0x01:
                 eof_flag = True
@@ -125,7 +125,7 @@ class ihexFile(object):
                 # print("New block")
                 if currentBlock is None:
                     currentBlock = ihexData()
-                    baseAddress = (address << 16)
+                    baseAddress = address << 16
                 else:
                     self.__blocks.append(currentBlock)
 
@@ -142,12 +142,29 @@ class ihexFile(object):
 
 def calculateKeyFromSeed(seed, ecuKey):
 
-    deviceSecret = [0x46, 0x45, 0x44, 0x43, 0x42, 0x41, 0x39, 0x38, 0x37, 0x36, 0x35, 0x34, 0x33, 0x32, 0x31, 0x30]
+    deviceSecret = [
+        0x46,
+        0x45,
+        0x44,
+        0x43,
+        0x42,
+        0x41,
+        0x39,
+        0x38,
+        0x37,
+        0x36,
+        0x35,
+        0x34,
+        0x33,
+        0x32,
+        0x31,
+        0x30,
+    ]
 
     md5Input = deviceSecret + seed + deviceSecret
-    c = pack('%sB' % len(md5Input), *md5Input)
+    c = pack("%sB" % len(md5Input), *md5Input)
     d = hashlib.md5(c).digest()
-    dUnpack = unpack('%sB' % 16, d)
+    dUnpack = unpack("%sB" % 16, d)
     sendList = [val for val in dUnpack]
 
     return sendList
@@ -155,8 +172,8 @@ def calculateKeyFromSeed(seed, ecuKey):
 
 if __name__ == "__main__":
 
-    #secondaryBootloaderContainer = chunkIhexFile("TGT-ASSY-1383_v2.1.0_sbl.hex")
-    #print(secondaryBootloaderContainer)
+    # secondaryBootloaderContainer = chunkIhexFile("TGT-ASSY-1383_v2.1.0_sbl.hex")
+    # print(secondaryBootloaderContainer)
     secondaryBootloader = ihexFile("TGT-ASSY-1383_v2.1.0_sbl.hex")
     blocks = secondaryBootloader.getBlocks()
     blockData = blocks[0].data
@@ -174,7 +191,9 @@ if __name__ == "__main__":
     if len(chunk) != 0:
         smallerChunks.append(chunk)
 
-    e400 = createUdsConnection("Bootloader.odx", "Bootloader", reqId=0x600, resId=0x650, interface="peak")
+    e400 = createUdsConnection(
+        "Bootloader.odx", "Bootloader", reqId=0x600, resId=0x650, interface="peak"
+    )
 
     a = e400.readDataByIdentifier("ECU Serial Number")
     print("Serial Number: {0}".format(a["ECU Serial Number"]))
@@ -191,40 +210,44 @@ if __name__ == "__main__":
     a = e400.securityAccess("Programming Request")
     print("Security Key: {0}".format(a))
 
-    b = calculateKeyFromSeed(a, [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+    b = calculateKeyFromSeed(a, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     print("Calculated Key: {0}".format(b))
 
     a = e400.securityAccess("Programming Key", b)
     print("Security Access Granted")
 
     print("Setting up transfer of Secondary Bootloader")
-    a = e400.requestDownload([0], [0x40, 0x03, 0xe0, 0x00], [0x00, 0x00, 0x0e, 0x56])
-    #print(a)
+    a = e400.requestDownload([0], [0x40, 0x03, 0xE0, 0x00], [0x00, 0x00, 0x0E, 0x56])
+    # print(a)
 
     print("Transferring Secondary Bootloader")
     for i in range(len(smallerChunks)):
-        a = e400.transferData(i+1, smallerChunks[i])
+        a = e400.transferData(i + 1, smallerChunks[i])
 
     print("Finished Transfer")
     a = e400.transferExit()
 
     print("Jumping to Secondary Bootloader")
-    a = e400.routineControl("Start Secondary Bootloader", 1, [0x4003e000])
-    #print(a)
+    a = e400.routineControl("Start Secondary Bootloader", 1, [0x4003E000])
+    # print(a)
 
     print("Erasing Memory")
-    a = e400.routineControl("Erase Memory", 1, [("memoryAddress",[0x00080000]), ("memorySize",[0x000162e4])])
-    #print(a)
+    a = e400.routineControl(
+        "Erase Memory",
+        1,
+        [("memoryAddress", [0x00080000]), ("memorySize", [0x000162E4])],
+    )
+    # print(a)
 
     working = True
     while working:
 
         a = e400.routineControl("Erase Memory", 3)
-        #print(a)
-        if(a['Erase Memory Status']) == [0x30]:
+        # print(a)
+        if (a["Erase Memory Status"]) == [0x30]:
             print("Erased memory")
             working = False
-        elif(a['Erase Memory Status'] == [0x31]):
+        elif a["Erase Memory Status"] == [0x31]:
             print("ABORTED")
             raise Exception("Erase memory unsuccessful")
         sleep(0.001)
@@ -247,12 +270,12 @@ if __name__ == "__main__":
         smallerChunks.append(chunk)
 
     print("Setting up transfer for Application")
-    a = e400.requestDownload([0], [0x00, 0x08, 0x00, 0x00], [0x00, 0x01, 0x62, 0xe4])
+    a = e400.requestDownload([0], [0x00, 0x08, 0x00, 0x00], [0x00, 0x01, 0x62, 0xE4])
 
     print("Transferring Application")
     for i in range(0, len(smallerChunks)):
 
-        a = e400.transferData(i+1, smallerChunks[i])
+        a = e400.transferData(i + 1, smallerChunks[i])
 
     print("Transfer Exit")
     a = e400.transferExit()
@@ -286,13 +309,9 @@ if __name__ == "__main__":
             working = False
             print("Aborted")
         elif routineStatus == 0x32:
-            #print("Working")
+            # print("Working")
             pass
 
         sleep(0.01)
 
-
     e400.ecuReset("Hard Reset", suppressResponse=True)
-
-
-

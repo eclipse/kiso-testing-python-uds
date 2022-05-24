@@ -10,4 +10,3 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 name = "uds_configuration"
-

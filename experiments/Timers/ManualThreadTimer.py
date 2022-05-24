@@ -1,11 +1,12 @@
 """This file is an experiment and should not be used for any serious coding"""
 
-from .iTimer import ITimer
 from threading import Thread
 from time import perf_counter
 
-class ManualThreadTimer(ITimer):
+from .iTimer import ITimer
 
+
+class ManualThreadTimer(ITimer):
     def __init__(self, timeout=0):
 
         self.__timeout = timeout
@@ -42,6 +43,7 @@ class ManualThreadTimer(ITimer):
         self.__expired_flag = True
         self.__active_flag = False
 
+
 if __name__ == "__main__":
 
     a = ManualThreadTimer(0.001)
@@ -50,7 +52,7 @@ if __name__ == "__main__":
     for i in range(0, 10000):
         startTime = perf_counter()
         a.start()
-        while(a.isExpired() == False):
+        while a.isExpired() == False:
             pass
         endTime = perf_counter()
         delta = endTime - startTime

@@ -11,4 +11,3 @@ __status__ = "Development"
 
 
 name = "uds_config_tool"
-

@@ -1,4 +1,3 @@
-
 ##
 # param: a diag service element
 # return: a dictionary with the sdgs data elements
@@ -10,10 +9,11 @@ def getSdgsData(diagServiceElement):
     sdg = sdgs.find("SDG")
     for i in sdg:
         try:
-            output[i.attrib['SI']] = i.text
+            output[i.attrib["SI"]] = i.text
         except:
             pass
     return output
+
 
 ##
 # param: a diagServiceElement, an string representing the si attribute
@@ -29,13 +29,14 @@ def getSdgsDataItem(diagServiceElement, itemName):
 
     return output
 
+
 ##
 # param: an xml element
 # return: a string with the short name, or None if no short name exists
 def getShortName(xmlElement):
 
     try:
-        output = xmlElement.find('SHORT-NAME').text
+        output = xmlElement.find("SHORT-NAME").text
     except:
         output = None
 
@@ -47,7 +48,7 @@ def getShortName(xmlElement):
 # return: a string with the long name, or None if no long name exists
 def getLongName(xmlElement):
     try:
-        output = xmlElement.find('LONG-NAME').text
+        output = xmlElement.find("LONG-NAME").text
     except:
         output = None
 
@@ -59,13 +60,13 @@ def getLongName(xmlElement):
 # return: an integer
 def getServiceIdFromDiagService(diagServiceElement, xmlElements):
 
-    requestKey = diagServiceElement.find('REQUEST-REF').attrib['ID-REF']
+    requestKey = diagServiceElement.find("REQUEST-REF").attrib["ID-REF"]
     requestElement = xmlElements[requestKey]
-    params = requestElement.find('PARAMS')
+    params = requestElement.find("PARAMS")
     for i in params:
         try:
-            if(i.attrib['SEMANTIC'] == 'SERVICE-ID'):
-                return int(i.find('CODED-VALUE').text)
+            if i.attrib["SEMANTIC"] == "SERVICE-ID":
+                return int(i.find("CODED-VALUE").text)
         except:
             pass
 
@@ -77,13 +78,13 @@ def getServiceIdFromDiagService(diagServiceElement, xmlElements):
 # return: an integer
 def getResponseIdFromDiagService(diagServiceElement, xmlElements):
 
-    requestKey = diagServiceElement.find('REQUEST-REF').attrib['ID-REF']
+    requestKey = diagServiceElement.find("REQUEST-REF").attrib["ID-REF"]
     requestElement = xmlElements[requestKey]
-    params = requestElement.find('PARAMS')
+    params = requestElement.find("PARAMS")
     for i in params:
         try:
-            if(i.attrib['SEMANTIC'] == 'SERVICE-ID'):
-                return int(i.find('CODED-VALUE').text)
+            if i.attrib["SEMANTIC"] == "SERVICE-ID":
+                return int(i.find("CODED-VALUE").text)
         except:
             pass
 
@@ -116,6 +117,7 @@ def getParamWithSemantic(xmlElement, semanticName):
     else:
         output = paramsList
     return output
+
 
 ##
 # params: a diagnostic service element xml entry, and the dictionary of all possible xml elements
@@ -155,14 +157,18 @@ def getDiagObjectProp(paramElement, xmlElements):
 
     return dopElement
 
+
 def getBitLengthFromDop(diagObjectPropElement):
 
     try:
-        bitLength = int(diagObjectPropElement.find("DIAG-CODED-TYPE").find("BIT-LENGTH").text)
+        bitLength = int(
+            diagObjectPropElement.find("DIAG-CODED-TYPE").find("BIT-LENGTH").text
+        )
     except:
         bitLength = None
 
     return bitLength
+
 
 def isDiagServiceTransmissionOnly(diagServiceElement):
 

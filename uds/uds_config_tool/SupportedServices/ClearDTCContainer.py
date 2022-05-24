@@ -10,8 +10,9 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 from types import MethodType
+
+from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 
 
 class ClearDTCContainer(object):
@@ -34,19 +35,25 @@ class ClearDTCContainer(object):
         # Note: clear DTC does not show support for multiple DIDs in the spec, so this is handling only a single DID with data record.
         requestFunction = target.clearDTCContainer.requestFunctions["FaultMemoryClear"]
         checkFunction = target.clearDTCContainer.checkFunctions["FaultMemoryClear"]
-        negativeResponseFunction = target.clearDTCContainer.negativeResponseFunctions["FaultMemoryClear"]
-        positiveResponseFunction = target.clearDTCContainer.positiveResponseFunctions["FaultMemoryClear"]
+        negativeResponseFunction = target.clearDTCContainer.negativeResponseFunctions[
+            "FaultMemoryClear"
+        ]
+        positiveResponseFunction = target.clearDTCContainer.positiveResponseFunctions[
+            "FaultMemoryClear"
+        ]
 
         # Call the sequence of functions to execute the RDBI request/response action ...
         # ==============================================================================
 
-        # Create the request. Note: we do not have to pre-check groupOfDTC as this action is performed by 
+        # Create the request. Note: we do not have to pre-check groupOfDTC as this action is performed by
         # the recipient (the response codes 0x13 and 0x31 provide the necessary cover of errors in the request) ...
         request = requestFunction(groupOfDTC)
 
         # Send request and receive the response ...
-        response = target.send(request) # ... this returns a single response
-        nrc = negativeResponseFunction(response)  # ... return nrc value if a negative response is received
+        response = target.send(request)  # ... this returns a single response
+        nrc = negativeResponseFunction(
+            response
+        )  # ... return nrc value if a negative response is received
         if nrc:
             return nrc
 

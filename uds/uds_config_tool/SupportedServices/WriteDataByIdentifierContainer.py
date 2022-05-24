@@ -10,8 +10,9 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 from types import MethodType
+
+from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 
 
 class WriteDataByIdentifierContainer(object):
@@ -32,21 +33,29 @@ class WriteDataByIdentifierContainer(object):
     def __writeDataByIdentifier(target, parameter, dataRecord, **kwargs):
 
         # Note: WDBI does not show support for multiple DIDs in the spec, so this is handling only a single DID with data record.
-        requestFunction = target.writeDataByIdentifierContainer.requestFunctions[parameter]
+        requestFunction = target.writeDataByIdentifierContainer.requestFunctions[
+            parameter
+        ]
         checkFunction = target.writeDataByIdentifierContainer.checkFunctions[parameter]
-        negativeResponseFunction = target.writeDataByIdentifierContainer.negativeResponseFunctions[parameter]
-        positiveResponseFunction = target.writeDataByIdentifierContainer.positiveResponseFunctions[parameter]
+        negativeResponseFunction = (
+            target.writeDataByIdentifierContainer.negativeResponseFunctions[parameter]
+        )
+        positiveResponseFunction = (
+            target.writeDataByIdentifierContainer.positiveResponseFunctions[parameter]
+        )
 
         # Call the sequence of functions to execute the RDBI request/response action ...
         # ==============================================================================
 
-        # Create the request. Note: we do not have to pre-check the dataRecord as this action is performed by 
+        # Create the request. Note: we do not have to pre-check the dataRecord as this action is performed by
         # the recipient (the response codes 0x13 and 0x31 provide the necessary cover of errors in the request) ...
         request = requestFunction(dataRecord)
 
         # Send request and receive the response ...
-        response = target.send(request) # ... this returns a single response
-        negativeResponse = negativeResponseFunction(response)  # ... return nrc value if a negative response is received
+        response = target.send(request)  # ... this returns a single response
+        negativeResponse = negativeResponseFunction(
+            response
+        )  # ... return nrc value if a negative response is received
         if negativeResponse:
             return negativeResponse
 
@@ -57,7 +66,9 @@ class WriteDataByIdentifierContainer(object):
         return positiveResponseFunction(response)
 
     def bind_function(self, bindObject):
-        bindObject.writeDataByIdentifier = MethodType(self.__writeDataByIdentifier, bindObject)
+        bindObject.writeDataByIdentifier = MethodType(
+            self.__writeDataByIdentifier, bindObject
+        )
 
     def add_requestFunction(self, aFunction, dictionaryEntry):
         self.requestFunctions[dictionaryEntry] = aFunction

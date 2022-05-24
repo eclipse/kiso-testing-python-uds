@@ -10,8 +10,9 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 from types import MethodType
+
+from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 
 
 class RequestUploadContainer(object):
@@ -32,10 +33,16 @@ class RequestUploadContainer(object):
     def __requestUpload(target, FormatIdentifier, MemoryAddress, MemorySize, **kwargs):
 
         # Note: RequestUpload does not show support for multiple DIDs in the spec, so this is handling only a single DID with data record.
-        requestFunction = target.requestUploadContainer.requestFunctions['RequestUpload']
-        checkFunction = target.requestUploadContainer.checkFunctions['RequestUpload']
-        negativeResponseFunction = target.requestUploadContainer.negativeResponseFunctions['RequestUpload']
-        positiveResponseFunction = target.requestUploadContainer.positiveResponseFunctions['RequestUpload']
+        requestFunction = target.requestUploadContainer.requestFunctions[
+            "RequestUpload"
+        ]
+        checkFunction = target.requestUploadContainer.checkFunctions["RequestUpload"]
+        negativeResponseFunction = (
+            target.requestUploadContainer.negativeResponseFunctions["RequestUpload"]
+        )
+        positiveResponseFunction = (
+            target.requestUploadContainer.positiveResponseFunctions["RequestUpload"]
+        )
 
         # Call the sequence of functions to execute the request download request/response action ...
         # ==============================================================================
@@ -43,13 +50,17 @@ class RequestUploadContainer(object):
         if checkFunction is None or positiveResponseFunction is None:
             suppressResponse = True
 
-        # Create the request. Note: we do not have to pre-check the dataRecord as this action is performed by 
+        # Create the request. Note: we do not have to pre-check the dataRecord as this action is performed by
         # the recipient (the response codes 0x13 and 0x31 provide the necessary cover of errors in the request) ...
         request = requestFunction(FormatIdentifier, MemoryAddress, MemorySize)
 
         # Send request and receive the response ...
-        response = target.send(request,responseRequired=True) # ... this returns a single response
-        nrc = negativeResponseFunction(response)  # ... return nrc value if a negative response is received
+        response = target.send(
+            request, responseRequired=True
+        )  # ... this returns a single response
+        nrc = negativeResponseFunction(
+            response
+        )  # ... return nrc value if a negative response is received
         if nrc:
             return nrc
 
@@ -59,18 +70,25 @@ class RequestUploadContainer(object):
         # All is still good, so return the response (currently this function does nothing, but including it here as a hook in case that changes) ...
         return positiveResponseFunction(response)
 
-
     def bind_function(self, bindObject):
         bindObject.requestUpload = MethodType(self.__requestUpload, bindObject)
 
-    def add_requestFunction(self, aFunction, dictionaryEntry):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
-        self.requestFunctions['RequestUpload'] = aFunction
+    def add_requestFunction(
+        self, aFunction, dictionaryEntry
+    ):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
+        self.requestFunctions["RequestUpload"] = aFunction
 
-    def add_checkFunction(self, aFunction, dictionaryEntry):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
-        self.checkFunctions['RequestUpload'] = aFunction
+    def add_checkFunction(
+        self, aFunction, dictionaryEntry
+    ):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
+        self.checkFunctions["RequestUpload"] = aFunction
 
-    def add_negativeResponseFunction(self, aFunction, dictionaryEntry):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
-        self.negativeResponseFunctions['RequestUpload'] = aFunction
+    def add_negativeResponseFunction(
+        self, aFunction, dictionaryEntry
+    ):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
+        self.negativeResponseFunctions["RequestUpload"] = aFunction
 
-    def add_positiveResponseFunction(self, aFunction, dictionaryEntry):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
-        self.positiveResponseFunctions['RequestUpload'] = aFunction
+    def add_positiveResponseFunction(
+        self, aFunction, dictionaryEntry
+    ):  # ... dictionaryEntry is not used (just there for consistency in UdsConfigTool.py) - i.e. this service is effectively hardcoded
+        self.positiveResponseFunctions["RequestUpload"] = aFunction

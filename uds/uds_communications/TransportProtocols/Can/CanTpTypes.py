@@ -64,7 +64,7 @@ class CanTpMTypes(Enum):
     REMOTE_DIAGNOSTICS = 0x02
 
 
-CANTP_MAX_PAYLOAD_LENGTH = 4095                    # hardcoded maximum based on the ISO 15765 standard
+CANTP_MAX_PAYLOAD_LENGTH = 4095  # hardcoded maximum based on the ISO 15765 standard
 N_PCI_INDEX = 0
 SINGLE_FRAME_DL_INDEX = 0
 SINGLE_FRAME_DATA_START_INDEX = 1

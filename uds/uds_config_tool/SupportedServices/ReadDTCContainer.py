@@ -10,8 +10,9 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 
-from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 from types import MethodType
+
+from uds.uds_config_tool.SupportedServices.iContainer import iContainer
 
 
 class ReadDTCContainer(object):
@@ -29,12 +30,29 @@ class ReadDTCContainer(object):
     # as one of the in-built methods. uds.readDTC("something") It does not operate
     # on this instance of the container class.
     @staticmethod
-    def __readDTC(target, subfunction, DTCStatusMask=None, DTCMaskRecord=None, DTCSnapshotRecordNumber=None, DTCExtendedRecordNumber=None, DTCSeverityMask=None, **kwargs):
+    def __readDTC(
+        target,
+        subfunction,
+        DTCStatusMask=None,
+        DTCMaskRecord=None,
+        DTCSnapshotRecordNumber=None,
+        DTCExtendedRecordNumber=None,
+        DTCSeverityMask=None,
+        **kwargs
+    ):
         # Note: readDTC does not show support for DIDs or multiple subfunctions in the spec, so this is handling only a single subfunction with data record.
-        requestFunction = target.readDTCContainer.requestFunctions["FaultMemoryRead[{0}]".format(subfunction)]
-        checkFunction = target.readDTCContainer.checkFunctions["FaultMemoryRead[{0}]".format(subfunction)]
-        negativeResponseFunction = target.readDTCContainer.negativeResponseFunctions["FaultMemoryRead[{0}]".format(subfunction)]
-        positiveResponseFunction = target.readDTCContainer.positiveResponseFunctions["FaultMemoryRead[{0}]".format(subfunction)]
+        requestFunction = target.readDTCContainer.requestFunctions[
+            "FaultMemoryRead[{0}]".format(subfunction)
+        ]
+        checkFunction = target.readDTCContainer.checkFunctions[
+            "FaultMemoryRead[{0}]".format(subfunction)
+        ]
+        negativeResponseFunction = target.readDTCContainer.negativeResponseFunctions[
+            "FaultMemoryRead[{0}]".format(subfunction)
+        ]
+        positiveResponseFunction = target.readDTCContainer.positiveResponseFunctions[
+            "FaultMemoryRead[{0}]".format(subfunction)
+        ]
 
         # Call the sequence of functions to execute the RDBI request/response action ...
         # ==============================================================================
@@ -42,15 +60,26 @@ class ReadDTCContainer(object):
         # Create the request ...
         DTCStatusMask = [DTCStatusMask] if DTCStatusMask is not None else []
         DTCMaskRecord = DTCMaskRecord if DTCMaskRecord is not None else []
-        DTCSnapshotRecordNumber = [DTCSnapshotRecordNumber] if DTCSnapshotRecordNumber is not None else []
-        DTCExtendedRecordNumber = [DTCExtendedRecordNumber] if DTCExtendedRecordNumber is not None else []
+        DTCSnapshotRecordNumber = (
+            [DTCSnapshotRecordNumber] if DTCSnapshotRecordNumber is not None else []
+        )
+        DTCExtendedRecordNumber = (
+            [DTCExtendedRecordNumber] if DTCExtendedRecordNumber is not None else []
+        )
         DTCSeverityMask = [DTCSeverityMask] if DTCSeverityMask is not None else []
-        request = requestFunction(DTCStatusMask=DTCStatusMask,DTCMaskRecord=DTCMaskRecord,DTCSnapshotRecordNumber=[],DTCExtendedRecordNumber=[],DTCSeverityMask=[])
-
+        request = requestFunction(
+            DTCStatusMask=DTCStatusMask,
+            DTCMaskRecord=DTCMaskRecord,
+            DTCSnapshotRecordNumber=[],
+            DTCExtendedRecordNumber=[],
+            DTCSeverityMask=[],
+        )
 
         # Send request and receive the response ...
-        response = target.send(request) # ... this returns a single response
-        nrc = negativeResponseFunction(response)  # ... return nrc value if a negative response is received
+        response = target.send(request)  # ... this returns a single response
+        nrc = negativeResponseFunction(
+            response
+        )  # ... return nrc value if a negative response is received
         if nrc:
             return nrc
 

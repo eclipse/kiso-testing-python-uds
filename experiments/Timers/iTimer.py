@@ -4,7 +4,6 @@ import abc
 
 
 class ITimer(abc.ABC):
-
     @abc.abstractmethod
     def start(self):
         pass
@@ -24,4 +23,3 @@ class ITimer(abc.ABC):
     @abc.abstractmethod
     def isRunning(self):
         pass
-
