@@ -17,10 +17,10 @@ with open("README.md", "r") as fh:
 
 setup(
     # Needed to silence warnings (and to be a worthwhile package)
-    name="python-uds",
+    name="pykiso-python-uds",
     url="https://github.com/BKaDamien/python-uds",
-    author="Richard Clubb, KAYSER Damien",
-    author_email="richard.clubb@embeduk.com, external.Damien.Kayser@de.bosch.com",
+    author="Richard Clubb, KAYSER Damien, Sebastian Clerson",
+    author_email="richard.clubb@embeduk.com, external.Damien.Kayser@de.bosch.com, external.Sebastian.Clerson@de.bosch.com",
     # Needed to actually package something
     packages=find_packages(exclude=["test", "test.*"]),
     # Needed for dependencies
@@ -29,7 +29,7 @@ setup(
     version="2.1.0",
     # The license can be anything you like
     license="MIT",
-    description="A library for interfacing with UDS using python and pykiso",
+    description="Please use python-uds instead, this is a refactored version with breaking changes, only for pykiso",
     # We will also need a readme eventually (there will be a warning)
     # long_description=open('README.txt').read(),
     classifiers=[
