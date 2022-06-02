@@ -13,9 +13,5 @@ __status__ = "Development"
 ##
 # @brief pads out an array with a fill value
 def fillArray(data, length, fillValue=0):
-    output = []
-    for i in range(0, length):
-        output.append(fillValue)
-    for i in range(0, len(data)):
-        output[i] = data[i]
-    return output
+    padded_data = data + ([fillValue] * (length - len(data)))
+    return padded_data

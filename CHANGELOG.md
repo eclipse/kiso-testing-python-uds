@@ -1,10 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## Current Version
+## [2.1.0]
 
 ### Features
 - Add support for ISO TP for server simulation
+- Add possibility to change the CAN TP padding pattern
+
+### Refactor
+- Run code formatting tools
 
 ## [1.2.0]
 
