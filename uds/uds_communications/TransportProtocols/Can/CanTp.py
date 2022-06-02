@@ -44,6 +44,7 @@ from uds.uds_communications.TransportProtocols.Can.CanTpTypes import (
 class CanTp(iTp):
 
     configParams = ["reqId", "resId", "addressingType"]
+    PADDING_PATTERN = 0x00
 
     ##
     # @brief constructor for the CanTp object
@@ -434,10 +435,17 @@ class CanTp(iTp):
         else:
             raise Exception("I do not know how to receive this addressing type")
 
+    ##
     # @brief override transmit method from the asscociated __connection
-    # @param func callable use to repalce actual configured tranmsit method
+    # @param func callable use to replace the current configured transmit method
     def overwrite_transmit_method(self, func):
         self.__connection.transmit = func
+
+    ##
+    # @brief override the TP reception method
+    # @param func callable use to replace the current getNextBufferedMessage method
+    def overwrite_receive_method(self, func):
+        self.getNextBufferedMessage = func
 
     ##
     # @brief function to decode the StMin parameter
@@ -471,7 +479,9 @@ class CanTp(iTp):
         while working:
             if (payloadPtr + pduLength) >= payloadLength:
                 working = False
-                currPdu = fillArray(payload[payloadPtr:], pduLength)
+                currPdu = fillArray(
+                    payload[payloadPtr:], pduLength, fillValue=self.PADDING_PATTERN
+                )
                 currBlock.append(currPdu)
                 blockList.append(currBlock)
 
