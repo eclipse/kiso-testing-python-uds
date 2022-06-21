@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.1]
+
+### Bugfixes
+- Restore support for other int sequences in fillArray
+
 ## [2.1.0]
 
 ### Features

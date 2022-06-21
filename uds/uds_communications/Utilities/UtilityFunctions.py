@@ -9,9 +9,10 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
+from typing import List, Sequence
 
 ##
 # @brief pads out an array with a fill value
-def fillArray(data, length, fillValue=0):
-    padded_data = data + ([fillValue] * (length - len(data)))
+def fillArray(data: Sequence[int], length: int, fillValue: int = 0) -> List[int]:
+    padded_data = list(data) + ([fillValue] * (length - len(data)))
     return padded_data
