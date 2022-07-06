@@ -12,7 +12,7 @@ __status__ = "Development"
 
 from os import path
 
-from uds import CanTp, Config, TestTp
+from uds import CanTp, Config
 
 
 ##
@@ -39,8 +39,6 @@ class TpFactory(object):
             raise NotImplementedError("K-Line Transport not currently supported")
         elif tpType == "FLEXRAY":
             raise NotImplementedError("FlexRay Transport not currently supported")
-        elif tpType == "TEST":
-            return TestTp()
         else:
             raise Exception("Unknown transport type selected")
 
