@@ -21,10 +21,6 @@ from uds.uds_communications.TransportProtocols.Can.CanConnection import (
 )
 from uds.uds_communications.TransportProtocols.Can.CanTp import CanTp
 
-# LIN imports
-from uds.uds_communications.TransportProtocols.Lin import LinTpTypes
-from uds.uds_communications.TransportProtocols.Lin.LinTp import LinTp
-
 # Test Transport Protocol
 from uds.uds_communications.TransportProtocols.Test.TestTp import TestTp
 

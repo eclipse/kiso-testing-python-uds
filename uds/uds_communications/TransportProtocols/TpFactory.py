@@ -12,7 +12,7 @@ __status__ = "Development"
 
 from os import path
 
-from uds import CanTp, Config, LinTp, TestTp
+from uds import CanTp, Config, TestTp
 
 
 ##
@@ -37,8 +37,6 @@ class TpFactory(object):
             raise NotImplementedError("DoIP transport not currently supported")
         elif tpType == "K-LINE":
             raise NotImplementedError("K-Line Transport not currently supported")
-        elif tpType == "LIN":
-            return LinTp(configPath=configPath, **kwargs)
         elif tpType == "FLEXRAY":
             raise NotImplementedError("FlexRay Transport not currently supported")
         elif tpType == "TEST":
