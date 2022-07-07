@@ -13,6 +13,7 @@ import threading
 
 from uds.config import Config
 from uds.factories import TpFactory
+from uds.uds_config_tool.UdsConfigTool import UdsTool
 from uds.uds_config_tool.IHexFunctions import ihexFile as ihexFileParser
 from uds.uds_config_tool.ISOStandard.ISOStandard import IsoDataFormatIdentifier
 
@@ -24,11 +25,7 @@ class Uds(object):
     # @brief a constructor
     # @param [in] reqId The request ID used by the UDS connection, defaults to None if not used
     # @param [in] resId The response Id used by the UDS connection, defaults to None if not used
-    def __init__(self, ihexFile=None, **kwargs):
-        self.__config = None
-        self.__transportProtocol = None
-        self.__P2_CAN_Client = None
-        self.__P2_CAN_Server = None
+    def __init__(self, odx = None, ihexFile=None, **kwargs):
 
         self.__transportProtocol = Config.uds.transport_protocol
         self.__P2_CAN_Client = Config.uds.p2_can_client
@@ -44,6 +41,15 @@ class Uds(object):
 
         # Process any ihex file that has been associated with the ecu at initialisation
         self.__ihexFile = ihexFileParser(ihexFile) if ihexFile is not None else None
+        self.load_odx(odx)
+
+    def load_odx(self, odx_file)-> None:
+        if odx_file is None:
+            return
+
+        UdsTool.create_service_containers(odx_file)
+        UdsTool.bind_containers(self)
+
 
     @property
     def ihexFile(self):
