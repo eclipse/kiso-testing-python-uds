@@ -13,7 +13,7 @@ __status__ = "Development"
 from abc import ABCMeta, abstractmethod
 
 
-class iResettableTimer(object):
+class iResettableTimer:
     __metaclass__ = ABCMeta
 
     @property

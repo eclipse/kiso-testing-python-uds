@@ -9,15 +9,15 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
-
+import configparser
 from os import path
 
-from uds import CanTp, Config
+from uds import CanTp
 
 
 ##
 # @brief class for creating Tp objects
-class TpFactory(object):
+class TpFactory:
 
     configType = ""
     configParameters = []
@@ -29,40 +29,7 @@ class TpFactory(object):
     @staticmethod
     def __call__(tpType, configPath=None, **kwargs):
 
-        # TpFactory.loadConfiguration(configPath)
-
         if tpType == "CAN":
             return CanTp(configPath=configPath, **kwargs)
-        elif tpType == "DoIP":
-            raise NotImplementedError("DoIP transport not currently supported")
-        elif tpType == "K-LINE":
-            raise NotImplementedError("K-Line Transport not currently supported")
-        elif tpType == "FLEXRAY":
-            raise NotImplementedError("FlexRay Transport not currently supported")
         else:
             raise Exception("Unknown transport type selected")
-
-    @staticmethod
-    def loadConfiguration(configPath=None):
-
-        # load the base config
-        baseConfig = path.dirname(__file__) + "/config.ini"
-        config = Config()
-        if path.exists(baseConfig):
-            config.read(baseConfig)
-        else:
-            raise FileNotFoundError("No base config file")
-
-        # check the config path
-        if configPath is not None:
-            if path.exists(configPath):
-                config.read(configPath)
-            else:
-                raise FileNotFoundError("specified config not found")
-
-        TpFactory.config = config
-
-
-if __name__ == "__main__":
-
-    pass

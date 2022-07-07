@@ -9,10 +9,11 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
+import configparser
 from os import path
 from time import sleep
 
-from uds import CanConnectionFactory, Config, ResettableTimer, fillArray, iTp
+from uds import ResettableTimer, fillArray, iTp
 from uds.uds_communications.TransportProtocols.Can.CanTpTypes import (
     CANTP_MAX_PAYLOAD_LENGTH,
     CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX,
@@ -48,7 +49,7 @@ class CanTp(iTp):
 
     ##
     # @brief constructor for the CanTp object
-    def __init__(self, configPath=None, **kwargs):
+    def __init__(self, connector = None, configPath=None, **kwargs):
 
         # perform the instance config
         self.__config = None
@@ -98,11 +99,7 @@ class CanTp(iTp):
             self.__maxPduLength = 62
             self.__pduStartIndex = 1
 
-        # set up the CAN connection
-        canConnectionFactory = CanConnectionFactory()
-        self.__connection = canConnectionFactory(
-            self.callback_onReceive, self.__resId, configPath, **kwargs  # <-filter
-        )
+        self.__connection = connector
 
         self.__recvBuffer = []
 
@@ -114,7 +111,7 @@ class CanTp(iTp):
 
         # load the base config
         baseConfig = path.dirname(__file__) + "/config.ini"
-        self.__config = Config()
+        self.__config = configparser.ConfigParser()
         if path.exists(baseConfig):
             self.__config.read(baseConfig)
         else:
@@ -398,14 +395,6 @@ class CanTp(iTp):
 
         return list(payload[:payloadLength])
 
-    ##
-    # dummy function for the time being
-    def closeConnection(self):
-        # deregister filters, listeners and notifiers etc
-        # close can connection
-        self.__connection.shutdown()
-        CanConnectionFactory.connections = {}
-        self.__connection = None
 
     ##
     # @brief clear out the receive list

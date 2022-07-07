@@ -9,14 +9,13 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
-
+import configparser
 import threading
 from os import path
 
-from uds import Config, TpFactory
+from uds import TpFactory
 from uds.uds_config_tool.IHexFunctions import ihexFile as ihexFileParser
 from uds.uds_config_tool.ISOStandard.ISOStandard import IsoDataFormatIdentifier
-
 
 ##
 # @brief a description is needed
@@ -27,7 +26,6 @@ class Uds(object):
     # @param [in] reqId The request ID used by the UDS connection, defaults to None if not used
     # @param [in] resId The response Id used by the UDS connection, defaults to None if not used
     def __init__(self, configPath=None, ihexFile=None, **kwargs):
-
         self.__config = None
         self.__transportProtocol = None
         self.__P2_CAN_Client = None
@@ -55,8 +53,8 @@ class Uds(object):
     def __loadConfiguration(self, configPath=None):
 
         baseConfig = path.dirname(__file__) + "/config.ini"
-        # print(baseConfig)
-        self.__config = Config()
+
+        self.__config = configparser.ConfigParser()
         if path.exists(baseConfig):
             self.__config.read(baseConfig)
         else:
@@ -158,10 +156,6 @@ class Uds(object):
         # print(("__transmissionActive_flag cleared:",self.__transmissionActive_flag))
 
         return response
-
-    def disconnect(self):
-
-        self.tp.closeConnection()
 
     ##
     # @brief
