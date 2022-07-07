@@ -10,12 +10,8 @@ try:
     from uds.uds_communications.Utilities.UtilityFunctions import fillArray
 
     # CAN Imports
-    from uds.uds_communications.TransportProtocols.iTp import iTp
     from uds.uds_communications.TransportProtocols.Can import CanTpTypes
     from uds.uds_communications.TransportProtocols.Can.CanTp import CanTp
-
-    # Transport Protocol factory
-    from uds.uds_communications.TransportProtocols.TpFactory import TpFactory
 
     # Uds-Config tool imports
     from uds.uds_config_tool.UdsConfigTool import createUdsConnection
@@ -35,5 +31,10 @@ try:
 
     # main uds import
     from uds.uds_communications.Uds.Uds import Uds
+
+    from uds.config import Config
+    from uds.interfaces import TpInterface
+    from uds.factories import TpFactory
+
 except Exception:
     logging.exception("awdwadwad")

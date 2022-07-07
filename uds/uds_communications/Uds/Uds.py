@@ -9,11 +9,10 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
-import configparser
 import threading
-from os import path
 
-from uds import TpFactory
+from uds.config import Config
+from uds.factories import TpFactory
 from uds.uds_config_tool.IHexFunctions import ihexFile as ihexFileParser
 from uds.uds_config_tool.ISOStandard.ISOStandard import IsoDataFormatIdentifier
 
@@ -25,58 +24,26 @@ class Uds(object):
     # @brief a constructor
     # @param [in] reqId The request ID used by the UDS connection, defaults to None if not used
     # @param [in] resId The response Id used by the UDS connection, defaults to None if not used
-    def __init__(self, configPath=None, ihexFile=None, **kwargs):
+    def __init__(self, ihexFile=None, **kwargs):
         self.__config = None
         self.__transportProtocol = None
         self.__P2_CAN_Client = None
         self.__P2_CAN_Server = None
 
-        self.__loadConfiguration(configPath)
-        self.__checkKwargs(**kwargs)
+        self.__transportProtocol = Config.uds.transport_protocol
+        self.__P2_CAN_Client = Config.uds.p2_can_client
+        self.__P2_CAN_Server = Config.uds.p2_can_server
 
-        self.__transportProtocol = self.__config["uds"]["transportProtocol"]
-        self.__P2_CAN_Client = float(self.__config["uds"]["P2_CAN_Client"])
-        self.__P2_CAN_Server = float(self.__config["uds"]["P2_CAN_Server"])
-
-        tpFactory = TpFactory()
-        self.tp = tpFactory(self.__transportProtocol, configPath=configPath, **kwargs)
+        self.tp = TpFactory.select_transport_protocol(self.__transportProtocol, **kwargs)
 
         # used as a semaphore for the tester present
         self.__transmissionActive_flag = False
-        # print(("__transmissionActive_flag initialised (clear):",self.__transmissionActive_flag))
+
         # The above flag should prevent testerPresent operation, but in case of race conditions, this lock prevents actual overlapo in the sending
         self.sendLock = threading.Lock()
 
         # Process any ihex file that has been associated with the ecu at initialisation
         self.__ihexFile = ihexFileParser(ihexFile) if ihexFile is not None else None
-
-    def __loadConfiguration(self, configPath=None):
-
-        baseConfig = path.dirname(__file__) + "/config.ini"
-
-        self.__config = configparser.ConfigParser()
-        if path.exists(baseConfig):
-            self.__config.read(baseConfig)
-        else:
-            raise FileNotFoundError("No base config file")
-
-        # check the config path
-        if configPath is not None:
-            if path.exists(configPath):
-                self.__config.read(configPath)
-            else:
-                raise FileNotFoundError("specified config not found")
-
-    def __checkKwargs(self, **kwargs):
-
-        if "transportProtocol" in kwargs:
-            self.__config["uds"]["transportProtocol"] = kwargs["transportProtocol"]
-
-        if "P2_CAN_Server" in kwargs:
-            self.__config["uds"]["P2_CAN_Server"] = str(kwargs["P2_CAN_Server"])
-
-        if "P2_CAN_Client" in kwargs:
-            self.__config["uds"]["P2_CAN_Client"] = str(kwargs["P2_CAN_Client"])
 
     @property
     def ihexFile(self):
@@ -160,10 +127,4 @@ class Uds(object):
     ##
     # @brief
     def isTransmitting(self):
-        # print(("requesting __transmissionActive_flag:",self.__transmissionActive_flag))
         return self.__transmissionActive_flag
-
-
-if __name__ == "__main__":
-
-    pass
