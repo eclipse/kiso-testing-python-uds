@@ -14,7 +14,7 @@ try:
     from uds.uds_communications.TransportProtocols.Can.CanTp import CanTp
 
     # Uds-Config tool imports
-    from uds.uds_config_tool.UdsConfigTool import createUdsConnection
+    from uds.uds_config_tool.UdsConfigTool import UdsTool
     from uds.uds_config_tool import (
         DecodeFunctions,
         FunctionCreation,
