@@ -168,7 +168,6 @@ class UdsTool:
     transExitService_flag = False
     testerPresentService_flag = False
 
-    #TODO: add class attribute instance usage
     @classmethod
     def create_service_containers(cls, xml_file):
         root = ET.parse(xml_file)

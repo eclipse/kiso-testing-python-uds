@@ -10,6 +10,7 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 import threading
+from pathlib import Path
 
 from uds.config import Config
 from uds.factories import TpFactory
@@ -43,7 +44,12 @@ class Uds(object):
         self.__ihexFile = ihexFileParser(ihexFile) if ihexFile is not None else None
         self.load_odx(odx)
 
-    def load_odx(self, odx_file)-> None:
+    def load_odx(self, odx_file: Path)-> None:
+        """Lod the given odx file and create the associated UDS 
+        diagnostic services:
+        
+        :param odx_file: idx file full path
+        """
         if odx_file is None:
             return
 
