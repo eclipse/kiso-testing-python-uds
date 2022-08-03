@@ -52,7 +52,6 @@ class Uds(object):
         """
         if odx_file is None:
             return
-
         UdsTool.create_service_containers(odx_file)
         UdsTool.bind_containers(self)
 
