@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Current version
+
+## Refactor
+ - remove unused code (Lin/Tests folders, CANConnection...)
+ - create new module config.py to handle/store isotp and uds layer configuration
+ - remove CreatesUdsConnection and replace it by UdsTool object
+ - move overwrite_transmit_method and overwrite_receive_method method from CanTp to UDS object
+
 ## [2.1.1]
 
 ### Bugfixes

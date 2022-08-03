@@ -371,18 +371,6 @@ class CanTp(TpInterface):
             raise Exception("I do not know how to receive this addressing type")
 
     ##
-    # @brief override transmit method from the asscociated __connection
-    # @param func callable use to replace the current configured transmit method
-    def overwrite_transmit_method(self, func):
-        self.__connection.transmit = func
-
-    ##
-    # @brief override the TP reception method
-    # @param func callable use to replace the current getNextBufferedMessage method
-    def overwrite_receive_method(self, func):
-        self.getNextBufferedMessage = func
-
-    ##
     # @brief function to decode the StMin parameter
     @staticmethod
     def decode_stMin(val):
@@ -470,3 +458,11 @@ class CanTp(TpInterface):
     @resIdAddress.setter
     def resIdAddress(self, value):
         self.__resId = value
+
+    @property
+    def connection(self):
+        return self.__connection
+
+    @connection.setter
+    def connection(self, value):
+        self.__connection = value

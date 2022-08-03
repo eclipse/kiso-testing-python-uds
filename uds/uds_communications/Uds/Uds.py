@@ -11,6 +11,7 @@ __status__ = "Development"
 
 import threading
 from pathlib import Path
+from typing import Callable
 
 from uds.config import Config
 from uds.factories import TpFactory
@@ -55,6 +56,21 @@ class Uds(object):
         UdsTool.create_service_containers(odx_file)
         UdsTool.bind_containers(self)
 
+    def overwrite_transmit_method(self, func : Callable):
+        """override transmit method from the asscociated __connection
+
+        :param func: callable use to replace the current configured 
+            transmit method
+        """
+        self.tp.connection.transmit = func
+
+    def overwrite_receive_method(self, func : Callable):
+        """override the TP reception method
+
+        :param func: callable use to replace the current 
+            getNextBufferedMessage method
+        """
+        self.tp.getNextBufferedMessage = func
 
     @property
     def ihexFile(self):
