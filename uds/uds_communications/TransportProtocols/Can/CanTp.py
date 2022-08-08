@@ -9,10 +9,13 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
+import configparser
 from os import path
 from time import sleep
 
-from uds import CanConnectionFactory, Config, ResettableTimer, fillArray, iTp
+from uds.config import Config
+from uds.interfaces import TpInterface
+from uds import ResettableTimer, fillArray
 from uds.uds_communications.TransportProtocols.Can.CanTpTypes import (
     CANTP_MAX_PAYLOAD_LENGTH,
     CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX,
@@ -41,27 +44,21 @@ from uds.uds_communications.TransportProtocols.Can.CanTpTypes import (
 #
 # Will spawn a CanTpListener class for incoming messages
 # depends on a bus object for communication on CAN
-class CanTp(iTp):
+class CanTp(TpInterface):
 
     configParams = ["reqId", "resId", "addressingType"]
     PADDING_PATTERN = 0x00
 
     ##
     # @brief constructor for the CanTp object
-    def __init__(self, configPath=None, **kwargs):
+    def __init__(self, connector = None, **kwargs):
 
-        # perform the instance config
-        self.__config = None
 
-        self.__loadConfiguration(configPath)
-        self.__checkKwargs(**kwargs)
+        self.__N_AE = Config.isotp.n_ae
+        self.__N_TA = Config.isotp.n_ta
+        self.__N_SA = Config.isotp.n_sa
 
-        # load variables from the config
-        self.__N_AE = int(self.__config["canTp"]["N_AE"], 16)
-        self.__N_TA = int(self.__config["canTp"]["N_TA"], 16)
-        self.__N_SA = int(self.__config["canTp"]["N_SA"], 16)
-
-        Mtype = self.__config["canTp"]["Mtype"]
+        Mtype = Config.isotp.m_type
         if Mtype == "DIAGNOSTICS":
             self.__Mtype = CanTpMTypes.DIAGNOSTICS
         elif Mtype == "REMOTE_DIAGNOSTICS":
@@ -69,7 +66,7 @@ class CanTp(iTp):
         else:
             raise Exception("Do not understand the Mtype config")
 
-        addressingType = self.__config["canTp"]["addressingType"]
+        addressingType = Config.isotp.addressing_type
         if addressingType == "NORMAL":
             self.__addressingType = CanTpAddressingTypes.NORMAL
         elif addressingType == "NORMAL_FIXED":
@@ -81,8 +78,8 @@ class CanTp(iTp):
         else:
             raise Exception("Do not understand the addressing config")
 
-        self.__reqId = int(self.__config["canTp"]["reqId"], 16)
-        self.__resId = int(self.__config["canTp"]["resId"], 16)
+        self.__reqId = Config.isotp.req_id
+        self.__resId = Config.isotp.res_id
 
         # sets up the relevant parameters in the instance
         if (self.__addressingType == CanTpAddressingTypes.NORMAL) | (
@@ -97,63 +94,9 @@ class CanTp(iTp):
             self.__minPduLength = 6
             self.__maxPduLength = 62
             self.__pduStartIndex = 1
-
-        # set up the CAN connection
-        canConnectionFactory = CanConnectionFactory()
-        self.__connection = canConnectionFactory(
-            self.callback_onReceive, self.__resId, configPath, **kwargs  # <-filter
-        )
-
+        self.__connection = connector
         self.__recvBuffer = []
-
-        self.__discardNegResp = bool(self.__config["canTp"]["discardNegResp"])
-
-    ##
-    # @brief used to load the local configuration options and override them with any passed in from a config file
-    def __loadConfiguration(self, configPath, **kwargs):
-
-        # load the base config
-        baseConfig = path.dirname(__file__) + "/config.ini"
-        self.__config = Config()
-        if path.exists(baseConfig):
-            self.__config.read(baseConfig)
-        else:
-            raise FileNotFoundError("No base config file")
-
-        # check the config path
-        if configPath is not None:
-            if path.exists(configPath):
-                self.__config.read(configPath)
-            else:
-                raise FileNotFoundError("specified config not found")
-
-    ##
-    # @brief goes through the kwargs and overrides any of the local configuration options
-    def __checkKwargs(self, **kwargs):
-
-        if "addressingType" in kwargs:
-            self.__config["canTp"]["addressingType"] = kwargs["addressingType"]
-
-        if "reqId" in kwargs:
-            self.__config["canTp"]["reqId"] = str(hex(kwargs["reqId"]))
-
-        if "resId" in kwargs:
-            self.__config["canTp"]["resId"] = str(hex(kwargs["resId"]))
-
-        if "N_SA" in kwargs:
-            self.__config["canTp"]["N_SA"] = str(kwargs["N_SA"])
-
-        if "N_TA" in kwargs:
-            self.__config["canTp"]["N_TA"] = str(kwargs["N_TA"])
-
-        if "N_AE" in kwargs:
-            self.__config["canTp"]["N_AE"] = str(kwargs["N_AE"])
-
-        if "Mtype" in kwargs:
-            self.__config["canTp"]["Mtype"] = str(kwargs["Mtype"])
-
-        if "discardNegResp" in kwargs:
-            self.__config["canTp"]["discardNegResp"] = str(kwargs["discardNegResp"])
+        self.__discardNegResp = Config.isotp.discard_neg_resp
 
     ##
     # @brief send method
@@ -398,14 +341,6 @@ class CanTp(iTp):
 
         return list(payload[:payloadLength])
 
-    ##
-    # dummy function for the time being
-    def closeConnection(self):
-        # deregister filters, listeners and notifiers etc
-        # close can connection
-        self.__connection.shutdown()
-        CanConnectionFactory.connections = {}
-        self.__connection = None
 
     ##
     # @brief clear out the receive list
@@ -434,18 +369,6 @@ class CanTp(iTp):
             raise Exception("I do not know how to receive this addressing type yet")
         else:
             raise Exception("I do not know how to receive this addressing type")
-
-    ##
-    # @brief override transmit method from the asscociated __connection
-    # @param func callable use to replace the current configured transmit method
-    def overwrite_transmit_method(self, func):
-        self.__connection.transmit = func
-
-    ##
-    # @brief override the TP reception method
-    # @param func callable use to replace the current getNextBufferedMessage method
-    def overwrite_receive_method(self, func):
-        self.getNextBufferedMessage = func
 
     ##
     # @brief function to decode the StMin parameter
@@ -535,3 +458,11 @@ class CanTp(iTp):
     @resIdAddress.setter
     def resIdAddress(self, value):
         self.__resId = value
+
+    @property
+    def connection(self):
+        return self.__connection
+
+    @connection.setter
+    def connection(self, value):
+        self.__connection = value

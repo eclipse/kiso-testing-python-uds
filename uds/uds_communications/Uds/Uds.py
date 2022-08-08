@@ -9,14 +9,15 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
-
 import threading
-from os import path
+from pathlib import Path
+from typing import Callable
 
-from uds import Config, TpFactory
+from uds.config import Config
+from uds.factories import TpFactory
+from uds.uds_config_tool.UdsConfigTool import UdsTool
 from uds.uds_config_tool.IHexFunctions import ihexFile as ihexFileParser
 from uds.uds_config_tool.ISOStandard.ISOStandard import IsoDataFormatIdentifier
-
 
 ##
 # @brief a description is needed
@@ -26,59 +27,50 @@ class Uds(object):
     # @brief a constructor
     # @param [in] reqId The request ID used by the UDS connection, defaults to None if not used
     # @param [in] resId The response Id used by the UDS connection, defaults to None if not used
-    def __init__(self, configPath=None, ihexFile=None, **kwargs):
+    def __init__(self, odx = None, ihexFile=None, **kwargs):
 
-        self.__config = None
-        self.__transportProtocol = None
-        self.__P2_CAN_Client = None
-        self.__P2_CAN_Server = None
+        self.__transportProtocol = Config.uds.transport_protocol
+        self.__P2_CAN_Client = Config.uds.p2_can_client
+        self.__P2_CAN_Server = Config.uds.p2_can_server
 
-        self.__loadConfiguration(configPath)
-        self.__checkKwargs(**kwargs)
-
-        self.__transportProtocol = self.__config["uds"]["transportProtocol"]
-        self.__P2_CAN_Client = float(self.__config["uds"]["P2_CAN_Client"])
-        self.__P2_CAN_Server = float(self.__config["uds"]["P2_CAN_Server"])
-
-        tpFactory = TpFactory()
-        self.tp = tpFactory(self.__transportProtocol, configPath=configPath, **kwargs)
+        self.tp = TpFactory.select_transport_protocol(self.__transportProtocol, **kwargs)
 
         # used as a semaphore for the tester present
         self.__transmissionActive_flag = False
-        # print(("__transmissionActive_flag initialised (clear):",self.__transmissionActive_flag))
+
         # The above flag should prevent testerPresent operation, but in case of race conditions, this lock prevents actual overlapo in the sending
         self.sendLock = threading.Lock()
 
         # Process any ihex file that has been associated with the ecu at initialisation
         self.__ihexFile = ihexFileParser(ihexFile) if ihexFile is not None else None
+        self.load_odx(odx)
 
-    def __loadConfiguration(self, configPath=None):
+    def load_odx(self, odx_file: Path)-> None:
+        """Lod the given odx file and create the associated UDS 
+        diagnostic services:
+        
+        :param odx_file: idx file full path
+        """
+        if odx_file is None:
+            return
+        UdsTool.create_service_containers(odx_file)
+        UdsTool.bind_containers(self)
 
-        baseConfig = path.dirname(__file__) + "/config.ini"
-        # print(baseConfig)
-        self.__config = Config()
-        if path.exists(baseConfig):
-            self.__config.read(baseConfig)
-        else:
-            raise FileNotFoundError("No base config file")
+    def overwrite_transmit_method(self, func : Callable):
+        """override transmit method from the asscociated __connection
 
-        # check the config path
-        if configPath is not None:
-            if path.exists(configPath):
-                self.__config.read(configPath)
-            else:
-                raise FileNotFoundError("specified config not found")
+        :param func: callable use to replace the current configured 
+            transmit method
+        """
+        self.tp.connection.transmit = func
 
-    def __checkKwargs(self, **kwargs):
+    def overwrite_receive_method(self, func : Callable):
+        """override the TP reception method
 
-        if "transportProtocol" in kwargs:
-            self.__config["uds"]["transportProtocol"] = kwargs["transportProtocol"]
-
-        if "P2_CAN_Server" in kwargs:
-            self.__config["uds"]["P2_CAN_Server"] = str(kwargs["P2_CAN_Server"])
-
-        if "P2_CAN_Client" in kwargs:
-            self.__config["uds"]["P2_CAN_Client"] = str(kwargs["P2_CAN_Client"])
+        :param func: callable use to replace the current 
+            getNextBufferedMessage method
+        """
+        self.tp.getNextBufferedMessage = func
 
     @property
     def ihexFile(self):
@@ -159,17 +151,7 @@ class Uds(object):
 
         return response
 
-    def disconnect(self):
-
-        self.tp.closeConnection()
-
     ##
     # @brief
     def isTransmitting(self):
-        # print(("requesting __transmissionActive_flag:",self.__transmissionActive_flag))
         return self.__transmissionActive_flag
-
-
-if __name__ == "__main__":
-
-    pass
