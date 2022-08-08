@@ -712,7 +712,7 @@ class UdsTool:
     @classmethod
     def bind_containers(cls, uds_instance)-> None:
         # Bind any ECU Reset services that have been found
-        if sessionService_flag:
+        if cls.sessionService_flag:
             setattr(
                 uds_instance,
                 "diagnosticSessionControlContainer",
@@ -721,66 +721,66 @@ class UdsTool:
             cls.diagnosticSessionControlContainer.bind_function(uds_instance)
 
         # Bind any ECU Reset services that have been found
-        if ecuResetService_flag:
+        if cls.ecuResetService_flag:
             setattr(uds_instance, "ecuResetContainer", cls.ecuResetContainer)
             cls.ecuResetContainer.bind_function(uds_instance)
 
         # Bind any rdbi services that have been found
-        if rdbiService_flag:
+        if cls.rdbiService_flag:
             setattr(uds_instance, "readDataByIdentifierContainer", cls.rdbiContainer)
             cls.rdbiContainer.bind_function(uds_instance)
 
         # Bind any security access services have been found
-        if securityAccess_flag:
+        if cls.securityAccess_flag:
             setattr(uds_instance, "securityAccessContainer", cls.securityAccessContainer)
             cls.securityAccessContainer.bind_function(uds_instance)
 
         # Bind any wdbi services have been found
-        if wdbiService_flag:
+        if cls.wdbiService_flag:
             setattr(uds_instance, "writeDataByIdentifierContainer", cls.wdbiContainer)
             cls.wdbiContainer.bind_function(uds_instance)
 
         # Bind any clear DTC services that have been found
-        if clearDTCService_flag:
+        if cls.clearDTCService_flag:
             setattr(uds_instance, "clearDTCContainer", cls.clearDTCContainer)
             cls.clearDTCContainer.bind_function(uds_instance)
 
         # Bind any read DTC services that have been found
-        if readDTCService_flag:
+        if cls.readDTCService_flag:
             setattr(uds_instance, "readDTCContainer", cls.readDTCContainer)
             cls.readDTCContainer.bind_function(uds_instance)
 
         # Bind any input output control services that have been found
-        if ioCtrlService_flag:
+        if cls.ioCtrlService_flag:
             setattr(uds_instance, "inputOutputControlContainer", cls.inputOutputControlContainer)
             cls.inputOutputControlContainer.bind_function(uds_instance)
 
         # Bind any routine control services that have been found
-        if routineCtrlService_flag:
+        if cls.routineCtrlService_flag:
             setattr(uds_instance, "routineControlContainer", cls.routineControlContainer)
             cls.routineControlContainer.bind_function(uds_instance)
 
         # Bind any request download services that have been found
-        if reqDownloadService_flag:
+        if cls.reqDownloadService_flag:
             setattr(uds_instance, "requestDownloadContainer", cls.requestDownloadContainer)
             cls.requestDownloadContainer.bind_function(uds_instance)
 
         # Bind any request upload services that have been found
-        if reqUploadService_flag:
+        if cls.reqUploadService_flag:
             setattr(uds_instance, "requestUploadContainer", cls.requestUploadContainer)
             cls.requestUploadContainer.bind_function(uds_instance)
 
         # Bind any transfer data services that have been found
-        if transDataService_flag:
+        if cls.transDataService_flag:
             setattr(uds_instance, "transferDataContainer", cls.transferDataContainer)
             cls.transferDataContainer.bind_function(uds_instance)
 
         # Bind any transfer exit data services that have been found
-        if transExitService_flag:
+        if cls.transExitService_flag:
             setattr(uds_instance, "transferExitContainer", cls.transferExitContainer)
             cls.transferExitContainer.bind_function(uds_instance)
 
         # Bind any tester present services that have been found
-        if testerPresentService_flag:
+        if cls.testerPresentService_flag:
             setattr(uds_instance, "testerPresentContainer", cls.testerPresentContainer)
             cls.testerPresentContainer.bind_function(uds_instance)
