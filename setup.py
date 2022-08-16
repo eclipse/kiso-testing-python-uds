@@ -24,9 +24,9 @@ setup(
     # Needed to actually package something
     packages=find_packages(exclude=["test", "test.*"]),
     # Needed for dependencies
-    install_requires=["python-can>=3.0.0"],
+    install_requires=["python-can>=4.0.0"],
     # *strongly* suggested for sharing
-    version="2.1.1",
+    version="2.2.0",
     # The license can be anything you like
     license="MIT",
     description="Please use python-uds instead, this is a refactored version with breaking changes, only for pykiso",

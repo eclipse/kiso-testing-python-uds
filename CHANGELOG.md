@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Current version
 
+## [2.2.0]
+
 ## Refactor
  - remove unused code (Lin/Tests folders, CANConnection...)
  - create new module config.py to handle/store isotp and uds layer configuration
