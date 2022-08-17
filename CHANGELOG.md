@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## Current version
 
-## [2.2.0]
+## [3.0.0]
 
 ## Refactor
  - remove unused code (Lin/Tests folders, CANConnection...)
