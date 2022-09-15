@@ -344,7 +344,7 @@ class UdsTool:
                             checkFunction, humanName
                         )
 
-                        securityAccess_flag = True
+                        cls.securityAccess_flag = True
 
                         if cls.securityAccessContainer not in UdsContainerAccess.containers:
                             UdsContainerAccess.containers.append(cls.securityAccessContainer)
