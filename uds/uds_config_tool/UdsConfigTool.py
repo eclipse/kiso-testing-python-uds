@@ -12,7 +12,7 @@ __status__ = "Development"
 
 import xml.etree.ElementTree as ET
 
-#from uds.uds_communications.Uds.Uds import Uds
+# from uds.uds_communications.Uds.Uds import Uds
 from uds.uds_config_tool.FunctionCreation.ClearDTCMethodFactory import (
     ClearDTCMethodFactory,
 )
@@ -136,6 +136,7 @@ def fill_dictionary(xmlElement):
         temp_dictionary[i.attrib["ID"]] = i
 
     return temp_dictionary
+
 
 class UdsTool:
 
@@ -292,7 +293,9 @@ class UdsTool:
                     cls.rdbiContainer.add_requestSIDFunction(
                         requestFunctions[0], humanName
                     )  # ... note: this will now need to handle replication of this one!!!!
-                    cls.rdbiContainer.add_requestDIDFunction(requestFunctions[1], humanName)
+                    cls.rdbiContainer.add_requestDIDFunction(
+                        requestFunctions[1], humanName
+                    )
 
                     negativeResponseFunction = ReadDataByIdentifierMethodFactory.create_checkNegativeResponseFunction(
                         value, xmlElements
@@ -304,10 +307,18 @@ class UdsTool:
                     checkFunctions = ReadDataByIdentifierMethodFactory.create_checkPositiveResponseFunctions(
                         value, xmlElements
                     )
-                    cls.rdbiContainer.add_checkSIDResponseFunction(checkFunctions[0], humanName)
-                    cls.rdbiContainer.add_checkSIDLengthFunction(checkFunctions[1], humanName)
-                    cls.rdbiContainer.add_checkDIDResponseFunction(checkFunctions[2], humanName)
-                    cls.rdbiContainer.add_checkDIDLengthFunction(checkFunctions[3], humanName)
+                    cls.rdbiContainer.add_checkSIDResponseFunction(
+                        checkFunctions[0], humanName
+                    )
+                    cls.rdbiContainer.add_checkSIDLengthFunction(
+                        checkFunctions[1], humanName
+                    )
+                    cls.rdbiContainer.add_checkDIDResponseFunction(
+                        checkFunctions[2], humanName
+                    )
+                    cls.rdbiContainer.add_checkDIDLengthFunction(
+                        checkFunctions[3], humanName
+                    )
 
                     positiveResponseFunction = ReadDataByIdentifierMethodFactory.create_encodePositiveResponseFunction(
                         value, xmlElements
@@ -344,16 +355,23 @@ class UdsTool:
                             checkFunction, humanName
                         )
 
-                        securityAccess_flag = True
+                        cls.securityAccess_flag = True
 
-                        if cls.securityAccessContainer not in UdsContainerAccess.containers:
-                            UdsContainerAccess.containers.append(cls.securityAccessContainer)
+                        if (
+                            cls.securityAccessContainer
+                            not in UdsContainerAccess.containers
+                        ):
+                            UdsContainerAccess.containers.append(
+                                cls.securityAccessContainer
+                            )
 
                 elif serviceId == IsoServices.WriteDataByIdentifier:
 
                     cls.wdbiService_flag = True
-                    requestFunc = WriteDataByIdentifierMethodFactory.create_requestFunction(
-                        value, xmlElements
+                    requestFunc = (
+                        WriteDataByIdentifierMethodFactory.create_requestFunction(
+                            value, xmlElements
+                        )
                     )
                     cls.wdbiContainer.add_requestFunction(requestFunc, humanName)
 
@@ -395,8 +413,10 @@ class UdsTool:
                         negativeResponseFunction, humanName
                     )
 
-                    checkFunc = ClearDTCMethodFactory.create_checkPositiveResponseFunction(
-                        value, xmlElements
+                    checkFunc = (
+                        ClearDTCMethodFactory.create_checkPositiveResponseFunction(
+                            value, xmlElements
+                        )
                     )
                     cls.clearDTCContainer.add_checkFunction(checkFunc, humanName)
 
@@ -487,7 +507,10 @@ class UdsTool:
                             positiveResponseFunction, humanName + qualifier
                         )
 
-                        if cls.inputOutputControlContainer not in UdsContainerAccess.containers:
+                        if (
+                            cls.inputOutputControlContainer
+                            not in UdsContainerAccess.containers
+                        ):
                             UdsContainerAccess.containers.append(
                                 cls.inputOutputControlContainer
                             )
@@ -527,50 +550,58 @@ class UdsTool:
                             positiveResponseFunction, humanName + qualifier
                         )
 
-                        if cls.routineControlContainer not in UdsContainerAccess.containers:
-                            UdsContainerAccess.containers.append(cls.routineControlContainer)
+                        if (
+                            cls.routineControlContainer
+                            not in UdsContainerAccess.containers
+                        ):
+                            UdsContainerAccess.containers.append(
+                                cls.routineControlContainer
+                            )
 
                 elif serviceId == IsoServices.RequestDownload:
                     cls.reqDownloadService_flag = True
                     requestFunc = RequestDownloadMethodFactory.create_requestFunction(
                         value, xmlElements
                     )
-                    cls.requestDownloadContainer.add_requestFunction(requestFunc, humanName)
+                    cls.requestDownloadContainer.add_requestFunction(
+                        requestFunc, humanName
+                    )
 
-                    negativeResponseFunction = (
-                        RequestDownloadMethodFactory.create_checkNegativeResponseFunction(
-                            value, xmlElements
-                        )
+                    negativeResponseFunction = RequestDownloadMethodFactory.create_checkNegativeResponseFunction(
+                        value, xmlElements
                     )
                     cls.requestDownloadContainer.add_negativeResponseFunction(
                         negativeResponseFunction, humanName
                     )
 
-                    checkFunc = (
-                        RequestDownloadMethodFactory.create_checkPositiveResponseFunction(
-                            value, xmlElements
-                        )
+                    checkFunc = RequestDownloadMethodFactory.create_checkPositiveResponseFunction(
+                        value, xmlElements
                     )
                     cls.requestDownloadContainer.add_checkFunction(checkFunc, humanName)
 
-                    positiveResponseFunction = (
-                        RequestDownloadMethodFactory.create_encodePositiveResponseFunction(
-                            value, xmlElements
-                        )
+                    positiveResponseFunction = RequestDownloadMethodFactory.create_encodePositiveResponseFunction(
+                        value, xmlElements
                     )
                     cls.requestDownloadContainer.add_positiveResponseFunction(
                         positiveResponseFunction, humanName
                     )
 
-                    if cls.requestDownloadContainer not in UdsContainerAccess.containers:
-                        UdsContainerAccess.containers.append(cls.requestDownloadContainer)
+                    if (
+                        cls.requestDownloadContainer
+                        not in UdsContainerAccess.containers
+                    ):
+                        UdsContainerAccess.containers.append(
+                            cls.requestDownloadContainer
+                        )
 
                 elif serviceId == IsoServices.RequestUpload:
                     cls.reqUploadService_flag = True
                     requestFunc = RequestUploadMethodFactory.create_requestFunction(
                         value, xmlElements
                     )
-                    cls.requestUploadContainer.add_requestFunction(requestFunc, humanName)
+                    cls.requestUploadContainer.add_requestFunction(
+                        requestFunc, humanName
+                    )
 
                     negativeResponseFunction = (
                         RequestUploadMethodFactory.create_checkNegativeResponseFunction(
@@ -588,10 +619,8 @@ class UdsTool:
                     )
                     cls.requestUploadContainer.add_checkFunction(checkFunc, humanName)
 
-                    positiveResponseFunction = (
-                        RequestUploadMethodFactory.create_encodePositiveResponseFunction(
-                            value, xmlElements
-                        )
+                    positiveResponseFunction = RequestUploadMethodFactory.create_encodePositiveResponseFunction(
+                        value, xmlElements
                     )
                     cls.requestUploadContainer.add_positiveResponseFunction(
                         positiveResponseFunction, humanName
@@ -605,7 +634,9 @@ class UdsTool:
                     requestFunc = TransferDataMethodFactory.create_requestFunction(
                         value, xmlElements
                     )
-                    cls.transferDataContainer.add_requestFunction(requestFunc, humanName)
+                    cls.transferDataContainer.add_requestFunction(
+                        requestFunc, humanName
+                    )
 
                     negativeResponseFunction = (
                         TransferDataMethodFactory.create_checkNegativeResponseFunction(
@@ -640,7 +671,9 @@ class UdsTool:
                     requestFunc = TransferExitMethodFactory.create_requestFunction(
                         value, xmlElements
                     )
-                    cls.transferExitContainer.add_requestFunction(requestFunc, humanName)
+                    cls.transferExitContainer.add_requestFunction(
+                        requestFunc, humanName
+                    )
 
                     negativeResponseFunction = (
                         TransferExitMethodFactory.create_checkNegativeResponseFunction(
@@ -677,7 +710,9 @@ class UdsTool:
                     requestFunc = TesterPresentMethodFactory.create_requestFunction(
                         value, xmlElements
                     )
-                    cls.testerPresentContainer.add_requestFunction(requestFunc, "TesterPresent")
+                    cls.testerPresentContainer.add_requestFunction(
+                        requestFunc, "TesterPresent"
+                    )
 
                     negativeResponseFunction = (
                         TesterPresentMethodFactory.create_checkNegativeResponseFunction(
@@ -693,12 +728,12 @@ class UdsTool:
                             value, xmlElements
                         )
                     )
-                    cls.testerPresentContainer.add_checkFunction(checkFunc, "TesterPresent")
+                    cls.testerPresentContainer.add_checkFunction(
+                        checkFunc, "TesterPresent"
+                    )
 
-                    positiveResponseFunction = (
-                        TesterPresentMethodFactory.create_encodePositiveResponseFunction(
-                            value, xmlElements
-                        )
+                    positiveResponseFunction = TesterPresentMethodFactory.create_encodePositiveResponseFunction(
+                        value, xmlElements
                     )
                     cls.testerPresentContainer.add_positiveResponseFunction(
                         positiveResponseFunction, "TesterPresent"
@@ -707,10 +742,8 @@ class UdsTool:
                     if cls.testerPresentContainer not in UdsContainerAccess.containers:
                         UdsContainerAccess.containers.append(cls.testerPresentContainer)
 
-
-
     @classmethod
-    def bind_containers(cls, uds_instance)-> None:
+    def bind_containers(cls, uds_instance) -> None:
         # Bind any ECU Reset services that have been found
         if cls.sessionService_flag:
             setattr(
@@ -732,7 +765,9 @@ class UdsTool:
 
         # Bind any security access services have been found
         if cls.securityAccess_flag:
-            setattr(uds_instance, "securityAccessContainer", cls.securityAccessContainer)
+            setattr(
+                uds_instance, "securityAccessContainer", cls.securityAccessContainer
+            )
             cls.securityAccessContainer.bind_function(uds_instance)
 
         # Bind any wdbi services have been found
@@ -752,17 +787,25 @@ class UdsTool:
 
         # Bind any input output control services that have been found
         if cls.ioCtrlService_flag:
-            setattr(uds_instance, "inputOutputControlContainer", cls.inputOutputControlContainer)
+            setattr(
+                uds_instance,
+                "inputOutputControlContainer",
+                cls.inputOutputControlContainer,
+            )
             cls.inputOutputControlContainer.bind_function(uds_instance)
 
         # Bind any routine control services that have been found
         if cls.routineCtrlService_flag:
-            setattr(uds_instance, "routineControlContainer", cls.routineControlContainer)
+            setattr(
+                uds_instance, "routineControlContainer", cls.routineControlContainer
+            )
             cls.routineControlContainer.bind_function(uds_instance)
 
         # Bind any request download services that have been found
         if cls.reqDownloadService_flag:
-            setattr(uds_instance, "requestDownloadContainer", cls.requestDownloadContainer)
+            setattr(
+                uds_instance, "requestDownloadContainer", cls.requestDownloadContainer
+            )
             cls.requestDownloadContainer.bind_function(uds_instance)
 
         # Bind any request upload services that have been found

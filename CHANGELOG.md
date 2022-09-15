@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## Current version
 
+### Bugfixes
+- set security access flag properly
+
 ## [3.0.0]
 
 ## Refactor
