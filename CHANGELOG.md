@@ -1,7 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## Current version
+## [3.0.1]
+
+## Bugfixes
+- SecurityAccess service never created by ODX configuration due to a mis-migrated flag 
 
 ## [3.0.0]
 
