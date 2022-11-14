@@ -9,38 +9,25 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
-
-import sys
+import logging
+from typing import List
 
 from uds.uds_config_tool import DecodeFunctions
-from uds.uds_config_tool.FunctionCreation.iServiceMethodFactory import (
-    IServiceMethodFactory,
-)
+from uds.uds_config_tool.FunctionCreation.iServiceMethodFactory import \
+    IServiceMethodFactory
+from uds.uds_config_tool.odx.diag_coded_types import DiagCodedType
+from uds.uds_config_tool.odx.param import Param
+from uds.uds_config_tool.odx.pos_response import PosResponse
+from uds.uds_config_tool.UtilityFunctions import (
+    getDiagCodedTypeFromDop, getDiagCodedTypeFromStructure)
 
 # Extended to cater for multiple DIDs in a request - typically rather than processing
 # a whole response in one go, we break it down and process each part separately.
 # We can cater for multiple DIDs by then combining whatever calls we need to.
+log = logging.getLogger(__name__)
 
 requestSIDFuncTemplate = str("def {0}():\n" "    return {1}")
 requestDIDFuncTemplate = str("def {0}():\n" "    return {1}")
-
-checkSIDRespFuncTemplate = str(
-    "def {0}(input):\n"
-    "    serviceIdExpected = {1}\n"
-    "    serviceId = DecodeFunctions.buildIntFromList(input[{2}:{3}])\n"
-    '    if(serviceId != serviceIdExpected): raise Exception("Service Id Received not expected. Expected {{0}}; Got {{1}} ".format(serviceIdExpected, serviceId))'
-)
-
-checkSIDLenFuncTemplate = str("def {0}():\n" "    return {1}")
-
-checkDIDRespFuncTemplate = str(
-    "def {0}(input):\n"
-    "    diagnosticIdExpected = {1}\n"
-    "    diagnosticId = DecodeFunctions.buildIntFromList(input[{2}:{3}])\n"
-    '    if(diagnosticId != diagnosticIdExpected): raise Exception("Diagnostic Id Received not as expected. Expected: {{0}}; Got {{1}}".format(diagnosticIdExpected, diagnosticId))'
-)
-
-checkDIDLenFuncTemplate = str("def {0}():\n" "    return {1}")
 
 negativeResponseFuncTemplate = str(
     "def {0}(input):\n"
@@ -50,10 +37,6 @@ negativeResponseFuncTemplate = str(
     "        result['NRC'] = input[{4}]\n"
     "        result['NRC_Label'] = nrcList.get(result['NRC'])\n"
     "    return result"
-)
-
-encodePositiveResponseFuncTemplate = str(
-    "def {0}(input,offset):\n" "    result = {{}}\n" "    {1}\n" "    return result"
 )
 
 
@@ -100,182 +83,68 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
         return (locals()[requestSIDFuncName], locals()[requestDIDFuncName])
 
     @staticmethod
-    def create_checkPositiveResponseFunctions(diagServiceElement, xmlElements):
+    def create_positiveResponseObjects(diagServiceElement, xmlElements):
 
+        positiveResponseElement = xmlElements[
+            (diagServiceElement.find("POS-RESPONSE-REFS"))
+            .find("POS-RESPONSE-REF")
+            .attrib["ID-REF"]
+        ]
+        paramsElement = positiveResponseElement.find("PARAMS")
+        # PosResponse attributes
         responseId = 0
         diagnosticId = 0
-
-        responseIdStart = 0
-        responseIdEnd = 0
-        diagnosticIdStart = 0
-        diagnosticIdEnd = 0
-
-        shortName = diagServiceElement.find("SHORT-NAME").text
-        checkSIDRespFuncName = "checkSIDResp_{0}".format(shortName)
-        checkSIDLenFuncName = "checkSIDLen_{0}".format(shortName)
-        checkDIDRespFuncName = "checkDIDResp_{0}".format(shortName)
-        checkDIDLenFuncName = "checkDIDLen_{0}".format(shortName)
-        positiveResponseElement = xmlElements[
-            (diagServiceElement.find("POS-RESPONSE-REFS"))
-            .find("POS-RESPONSE-REF")
-            .attrib["ID-REF"]
-        ]
-
-        paramsElement = positiveResponseElement.find("PARAMS")
-
-        totalLength = 0
         SIDLength = 0
+        DIDLength = 0
+        params: List[Param] = []
 
-        for param in paramsElement:
+        for paramElement in paramsElement:
             try:
                 semantic = None
                 try:
-                    semantic = param.attrib["SEMANTIC"]
+                    semantic = paramElement.attrib["SEMANTIC"]
                 except AttributeError:
                     pass
 
-                startByte = int(param.find("BYTE-POSITION").text)
+                short_name = (paramElement.find("SHORT-NAME")).text
+                byte_position = int((paramElement.find("BYTE-POSITION")).text)
 
                 if semantic == "SERVICE-ID":
-                    responseId = int(param.find("CODED-VALUE").text)
+                    responseId = int(paramElement.find("CODED-VALUE").text)
                     bitLength = int(
-                        (param.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
+                        (paramElement.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
                     )
-                    listLength = int(bitLength / 8)
-                    responseIdStart = startByte
-                    responseIdEnd = startByte + listLength
-                    totalLength += listLength
-                    SIDLength = listLength
+                    SIDLength = int(bitLength / 8)
                 elif semantic == "ID":
-                    diagnosticId = int(param.find("CODED-VALUE").text)
+                    diagnosticId = int(paramElement.find("CODED-VALUE").text)
                     bitLength = int(
-                        (param.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
+                        (paramElement.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
                     )
-                    listLength = int(bitLength / 8)
-                    diagnosticIdStart = startByte
-                    diagnosticIdEnd = startByte + listLength
-                    totalLength += listLength
+                    DIDLength = int(bitLength / 8)
                 elif semantic == "DATA":
+                    diagCodedType: DiagCodedType = None
+                    # need to parse the param for the DIAG CODED TYPE
                     dataObjectElement = xmlElements[
-                        (param.find("DOP-REF")).attrib["ID-REF"]
+                        (paramElement.find("DOP-REF")).attrib["ID-REF"]
                     ]
                     if dataObjectElement.tag == "DATA-OBJECT-PROP":
-                        start = int(param.find("BYTE-POSITION").text)
-                        bitLength = int(
-                            dataObjectElement.find("DIAG-CODED-TYPE")
-                            .find("BIT-LENGTH")
-                            .text
-                        )
-                        listLength = int(bitLength / 8)
-                        totalLength += listLength
+                        diagCodedType = getDiagCodedTypeFromDop(dataObjectElement)
+
                     elif dataObjectElement.tag == "STRUCTURE":
-                        start = int(param.find("BYTE-POSITION").text)
-                        listLength = int(dataObjectElement.find("BYTE-SIZE").text)
-                        totalLength += listLength
+                        diagCodedType = getDiagCodedTypeFromStructure(dataObjectElement, xmlElements)
                     else:
+                        # neither DOP nor STRUCTURE
                         pass
+                    param: Param = Param(short_name, byte_position, diagCodedType)
+                    params.append(param)
                 else:
+                    # not a PARAM with SID, ID (= DID), or DATA
                     pass
-            except:
-                # print(sys.exc_info())
-                pass
+            except Exception as e:
+                log.debug(e)
 
-        checkSIDRespFuncString = checkSIDRespFuncTemplate.format(
-            checkSIDRespFuncName,  # 0
-            responseId,  # 1
-            responseIdStart,  # 2
-            responseIdEnd,
-        )  # 3
-        exec(checkSIDRespFuncString)
-        checkSIDLenFuncString = checkSIDLenFuncTemplate.format(
-            checkSIDLenFuncName, SIDLength  # 0
-        )  # 1
-        exec(checkSIDLenFuncString)
-        checkDIDRespFuncString = checkDIDRespFuncTemplate.format(
-            checkDIDRespFuncName,  # 0
-            diagnosticId,  # 1
-            diagnosticIdStart
-            - SIDLength,  # 2... note: we no longer look at absolute pos in the response,
-            diagnosticIdEnd - SIDLength,
-        )  # 3      but look at the DID response as an isolated extracted element.
-        exec(checkDIDRespFuncString)
-        checkDIDLenFuncString = checkDIDLenFuncTemplate.format(
-            checkDIDLenFuncName, totalLength - SIDLength  # 0
-        )  # 1
-        exec(checkDIDLenFuncString)
-
-        return (
-            locals()[checkSIDRespFuncName],
-            locals()[checkSIDLenFuncName],
-            locals()[checkDIDRespFuncName],
-            locals()[checkDIDLenFuncName],
-        )
-
-    ##
-    # @brief may need refactoring to deal with multiple positive-responses (WIP)
-    @staticmethod
-    def create_encodePositiveResponseFunction(diagServiceElement, xmlElements):
-
-        positiveResponseElement = xmlElements[
-            (diagServiceElement.find("POS-RESPONSE-REFS"))
-            .find("POS-RESPONSE-REF")
-            .attrib["ID-REF"]
-        ]
-
-        shortName = diagServiceElement.find("SHORT-NAME").text
-        encodePositiveResponseFunctionName = "encode_{0}".format(shortName)
-
-        params = positiveResponseElement.find("PARAMS")
-
-        encodeFunctions = []
-
-        for param in params:
-            try:
-                semantic = None
-                try:
-                    semantic = param.attrib["SEMANTIC"]
-                except AttributeError:
-                    pass
-
-                if semantic == "DATA":
-                    dataObjectElement = xmlElements[
-                        (param.find("DOP-REF")).attrib["ID-REF"]
-                    ]
-                    longName = param.find("LONG-NAME").text
-                    bytePosition = int(param.find("BYTE-POSITION").text)
-                    bitLength = int(
-                        dataObjectElement.find("DIAG-CODED-TYPE")
-                        .find("BIT-LENGTH")
-                        .text
-                    )
-                    listLength = int(bitLength / 8)
-                    endPosition = bytePosition + listLength
-                    encodingType = dataObjectElement.find("DIAG-CODED-TYPE").attrib[
-                        "BASE-DATA-TYPE"
-                    ]
-                    if (encodingType) == "A_ASCIISTRING":
-                        functionString = "DecodeFunctions.intListToString(input[{0}-offset:{1}-offset], None)".format(
-                            bytePosition, endPosition
-                        )
-                    elif encodingType == "A_UINT32":
-                        functionString = "input[{1}-offset:{2}-offset]".format(
-                            longName, bytePosition, endPosition
-                        )
-                    else:
-                        functionString = "input[{1}-offset:{2}-offset]".format(
-                            longName, bytePosition, endPosition
-                        )
-                    encodeFunctions.append(
-                        "result['{0}'] = {1}".format(longName, functionString)
-                    )
-            except:
-                pass
-
-        encodeFunctionString = encodePositiveResponseFuncTemplate.format(
-            encodePositiveResponseFunctionName, "\n    ".join(encodeFunctions)
-        )
-        exec(encodeFunctionString)
-        return locals()[encodePositiveResponseFunctionName]
+        posResponse = PosResponse(params, DIDLength, diagnosticId, SIDLength, responseId)
+        return posResponse
 
     @staticmethod
     def create_checkNegativeResponseFunction(diagServiceElement, xmlElements):
@@ -327,8 +196,8 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
                             expectedNrcDict[int(nrcElem.find("LOWER-LIMIT").text)] = (
                                 nrcElem.find("COMPU-CONST").find("VT").text
                             )
-                    except:
-                        pass
+                    except Exception as e:
+                        log.debug(e)
                 pass
 
         negativeResponseFunctionString = negativeResponseFuncTemplate.format(

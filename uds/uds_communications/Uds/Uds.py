@@ -15,9 +15,10 @@ from typing import Callable
 
 from uds.config import Config
 from uds.factories import TpFactory
-from uds.uds_config_tool.UdsConfigTool import UdsTool
 from uds.uds_config_tool.IHexFunctions import ihexFile as ihexFileParser
 from uds.uds_config_tool.ISOStandard.ISOStandard import IsoDataFormatIdentifier
+from uds.uds_config_tool.UdsConfigTool import UdsTool
+
 
 ##
 # @brief a description is needed
@@ -46,9 +47,9 @@ class Uds(object):
         self.load_odx(odx)
 
     def load_odx(self, odx_file: Path)-> None:
-        """Lod the given odx file and create the associated UDS 
+        """Lod the given odx file and create the associated UDS
         diagnostic services:
-        
+
         :param odx_file: idx file full path
         """
         if odx_file is None:
@@ -59,7 +60,7 @@ class Uds(object):
     def overwrite_transmit_method(self, func : Callable):
         """override transmit method from the asscociated __connection
 
-        :param func: callable use to replace the current configured 
+        :param func: callable use to replace the current configured
             transmit method
         """
         self.tp.connection.transmit = func
@@ -67,7 +68,7 @@ class Uds(object):
     def overwrite_receive_method(self, func : Callable):
         """override the TP reception method
 
-        :param func: callable use to replace the current 
+        :param func: callable use to replace the current
             getNextBufferedMessage method
         """
         self.tp.getNextBufferedMessage = func

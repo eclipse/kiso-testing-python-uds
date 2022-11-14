@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ODX MODEL-VERSION="2.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="odx.xsd">
+  <DIAG-LAYER-CONTAINER>
+    <BASE-VARIANTS>
+      <BASE-VARIANT>
+        <DIAG-DATA-DICTIONARY-SPEC>
+          <DATA-OBJECT-PROPS>
+            <DATA-OBJECT-PROP ID="_1">
+              <SHORT-NAME>PartNumberSize13</SHORT-NAME>
+              <LONG-NAME>partNumber_t</LONG-NAME>
+              <COMPU-METHOD>
+                  <CATEGORY>IDENTICAL</CATEGORY>
+              </COMPU-METHOD>
+              <DIAG-CODED-TYPE BASE-TYPE-ENCODING="ISO-8859-1" BASE-DATA-TYPE="A_ASCIISTRING" TERMINATION="ZERO" xsi:type="MIN-MAX-LENGTH-TYPE">
+                  <MAX-LENGTH>14</MAX-LENGTH>
+                  <MIN-LENGTH>1</MIN-LENGTH>
+              </DIAG-CODED-TYPE>
+              <PHYSICAL-TYPE BASE-DATA-TYPE="A_UNICODE2STRING"/>
+            </DATA-OBJECT-PROP>
+            <DATA-OBJECT-PROP ID="_12">
+              <SHORT-NAME>Read_DOP_2</SHORT-NAME>
+              <LONG-NAME>Read_DOP</LONG-NAME>
+              <COMPU-METHOD>
+                <CATEGORY>TEXTTABLE</CATEGORY>
+                <COMPU-INTERNAL-TO-PHYS>
+                  <COMPU-SCALES>
+                    <COMPU-SCALE>
+                      <LOWER-LIMIT>19</LOWER-LIMIT>
+                      <UPPER-LIMIT>19</UPPER-LIMIT>
+                      <COMPU-CONST>
+                        <VT>Incorrect message length or invalid format</VT>
+                      </COMPU-CONST>
+                    </COMPU-SCALE>
+                    <COMPU-SCALE>
+                      <LOWER-LIMIT>34</LOWER-LIMIT>
+                      <UPPER-LIMIT>34</UPPER-LIMIT>
+                      <COMPU-CONST>
+                        <VT>Conditions not correct</VT>
+                      </COMPU-CONST>
+                    </COMPU-SCALE>
+                    <COMPU-SCALE>
+                      <LOWER-LIMIT>49</LOWER-LIMIT>
+                      <UPPER-LIMIT>49</UPPER-LIMIT>
+                      <COMPU-CONST>
+                        <VT>Request out of range</VT>
+                      </COMPU-CONST>
+                    </COMPU-SCALE>
+                    <COMPU-SCALE>
+                      <LOWER-LIMIT>51</LOWER-LIMIT>
+                      <UPPER-LIMIT>51</UPPER-LIMIT>
+                      <COMPU-CONST>
+                        <VT>Security access denied</VT>
+                      </COMPU-CONST>
+                    </COMPU-SCALE>
+                  </COMPU-SCALES>
+                </COMPU-INTERNAL-TO-PHYS>
+              </COMPU-METHOD>
+              <DIAG-CODED-TYPE BASE-DATA-TYPE="A_UINT32" xsi:type="STANDARD-LENGTH-TYPE">
+                <BIT-LENGTH>8</BIT-LENGTH>
+              </DIAG-CODED-TYPE>
+              <PHYSICAL-TYPE BASE-DATA-TYPE="A_UNICODE2STRING"/>
+              <INTERNAL-CONSTR>
+                <SCALE-CONSTRS>
+                  <SCALE-CONSTR VALIDITY="NOT-DEFINED">
+                    <LOWER-LIMIT>0</LOWER-LIMIT>
+                    <UPPER-LIMIT>18</UPPER-LIMIT>
+                  </SCALE-CONSTR>
+                  <SCALE-CONSTR VALIDITY="NOT-DEFINED">
+                    <LOWER-LIMIT>20</LOWER-LIMIT>
+                    <UPPER-LIMIT>33</UPPER-LIMIT>
+                  </SCALE-CONSTR>
+                  <SCALE-CONSTR VALIDITY="NOT-DEFINED">
+                    <LOWER-LIMIT>35</LOWER-LIMIT>
+                    <UPPER-LIMIT>48</UPPER-LIMIT>
+                  </SCALE-CONSTR>
+                  <SCALE-CONSTR VALIDITY="NOT-DEFINED">
+                    <LOWER-LIMIT>50</LOWER-LIMIT>
+                    <UPPER-LIMIT>50</UPPER-LIMIT>
+                  </SCALE-CONSTR>
+                  <SCALE-CONSTR VALIDITY="NOT-DEFINED">
+                    <LOWER-LIMIT>52</LOWER-LIMIT>
+                    <UPPER-LIMIT>255</UPPER-LIMIT>
+                  </SCALE-CONSTR>
+                </SCALE-CONSTRS>
+              </INTERNAL-CONSTR>
+            </DATA-OBJECT-PROP>
+          </DATA-OBJECT-PROPS>
+          <STRUCTURES>
+            <STRUCTURE ID="_2">
+              <SHORT-NAME>Dynamic_PartNumber</SHORT-NAME>
+              <LONG-NAME>Dynamic_PartNumber</LONG-NAME>
+              <PARAMS>
+                <PARAM SEMANTIC="DATA" xsi:type="VALUE">
+                  <SHORT-NAME>PartNumber</SHORT-NAME>
+                  <LONG-NAME>PartNumber</LONG-NAME>
+                  <BYTE-POSITION>0</BYTE-POSITION>
+                  <DOP-REF ID-REF="_1"/>
+                </PARAM>
+              </PARAMS>
+            </STRUCTURE>
+          </STRUCTURES>
+        </DIAG-DATA-DICTIONARY-SPEC>
+        <DIAG-COMMS>
+          <DIAG-SERVICE ID="_3" SEMANTIC="IDENTIFICATION">
+            <SHORT-NAME>DU_BoschDuPartNumber_Read</SHORT-NAME>
+            <LONG-NAME>DU_BoschDuPartNumber Read</LONG-NAME>
+            <SDGS>
+              <SDG>
+                <SDG-CAPTION ID="_4">
+                  <SHORT-NAME>CANdelaServiceInformation</SHORT-NAME>
+                </SDG-CAPTION>
+                <SD SI="DiagInstanceQualifier">Dynamic_PartNumber</SD>
+                <SD SI="DiagInstanceName">Dynamic_PartNumber</SD>
+                <SD SI="ServiceQualifier">Read</SD>
+                <SD SI="ServiceName">Read</SD>
+                <SD SI="PositiveResponseSuppressed">no</SD>
+              </SDG>
+            </SDGS>
+            <FUNCT-CLASS-REFS>
+              <FUNCT-CLASS-REF ID-REF="_5"/>
+            </FUNCT-CLASS-REFS>
+            <AUDIENCE IS-SUPPLIER="false" IS-DEVELOPMENT="false" IS-MANUFACTURING="false" IS-AFTERSALES="false" IS-AFTERMARKET="false"/>
+            <PRE-CONDITION-STATE-REFS>
+              <PRE-CONDITION-STATE-REF ID-REF="_6">
+                <VALUE></VALUE>
+              </PRE-CONDITION-STATE-REF>
+              <PRE-CONDITION-STATE-REF ID-REF="_7">
+                <VALUE></VALUE>
+              </PRE-CONDITION-STATE-REF>
+              <PRE-CONDITION-STATE-REF ID-REF="_8">
+                <VALUE></VALUE>
+              </PRE-CONDITION-STATE-REF>
+            </PRE-CONDITION-STATE-REFS>
+            <REQUEST-REF ID-REF="_9"/>
+            <POS-RESPONSE-REFS>
+              <POS-RESPONSE-REF ID-REF="_10"/>
+            </POS-RESPONSE-REFS>
+            <NEG-RESPONSE-REFS>
+              <NEG-RESPONSE-REF ID-REF="_11"/>
+            </NEG-RESPONSE-REFS>
+          </DIAG-SERVICE>
+        </DIAG-COMMS>
+        <REQUESTS>
+          <REQUEST ID="_9">
+            <SHORT-NAME>RQ_Dynamic_PartNumber_Read</SHORT-NAME>
+            <LONG-NAME>RQ Dynamic_PartNumber Read</LONG-NAME>
+            <PARAMS>
+              <PARAM SEMANTIC="SERVICE-ID" xsi:type="CODED-CONST">
+                <SHORT-NAME>SID_RQ</SHORT-NAME>
+                <LONG-NAME>SID-RQ</LONG-NAME>
+                <BYTE-POSITION>0</BYTE-POSITION>
+                <CODED-VALUE>34</CODED-VALUE>
+                <DIAG-CODED-TYPE BASE-DATA-TYPE="A_UINT32" xsi:type="STANDARD-LENGTH-TYPE">
+                  <BIT-LENGTH>8</BIT-LENGTH>
+                </DIAG-CODED-TYPE>
+              </PARAM>
+              <PARAM SEMANTIC="ID" xsi:type="CODED-CONST">
+                <SHORT-NAME>RecordDataIdentifier</SHORT-NAME>
+                <LONG-NAME>Identifier</LONG-NAME>
+                <BYTE-POSITION>1</BYTE-POSITION>
+                <CODED-VALUE>660</CODED-VALUE>
+                <DIAG-CODED-TYPE BASE-DATA-TYPE="A_UINT32" xsi:type="STANDARD-LENGTH-TYPE">
+                  <BIT-LENGTH>16</BIT-LENGTH>
+                </DIAG-CODED-TYPE>
+              </PARAM>
+            </PARAMS>
+          </REQUEST>
+          <POS-RESPONSES>
+            <POS-RESPONSE ID="_10">
+              <SHORT-NAME>PR_Dynamic_PartNumber_Read</SHORT-NAME>
+              <LONG-NAME>PR Dynamic_PartNumber Read</LONG-NAME>
+              <PARAMS>
+                <PARAM SEMANTIC="SERVICE-ID" xsi:type="CODED-CONST">
+                  <SHORT-NAME>SID_PR</SHORT-NAME>
+                  <LONG-NAME>SID-PR</LONG-NAME>
+                  <BYTE-POSITION>0</BYTE-POSITION>
+                  <CODED-VALUE>98</CODED-VALUE>
+                  <DIAG-CODED-TYPE BASE-DATA-TYPE="A_UINT32" xsi:type="STANDARD-LENGTH-TYPE">
+                    <BIT-LENGTH>8</BIT-LENGTH>
+                  </DIAG-CODED-TYPE>
+                </PARAM>
+                <PARAM SEMANTIC="ID" xsi:type="CODED-CONST">
+                  <SHORT-NAME>RecordDataIdentifier</SHORT-NAME>
+                  <LONG-NAME>Identifier</LONG-NAME>
+                  <BYTE-POSITION>1</BYTE-POSITION>
+                  <CODED-VALUE>660</CODED-VALUE>
+                  <DIAG-CODED-TYPE BASE-DATA-TYPE="A_UINT32" xsi:type="STANDARD-LENGTH-TYPE">
+                    <BIT-LENGTH>16</BIT-LENGTH>
+                  </DIAG-CODED-TYPE>
+                </PARAM>
+                <PARAM SEMANTIC="DATA" xsi:type="VALUE">
+                  <SHORT-NAME>PartNumber</SHORT-NAME>
+                  <LONG-NAME>PartNumber</LONG-NAME>
+                  <BYTE-POSITION>3</BYTE-POSITION>
+                  <DOP-REF ID-REF="_2"/>
+                </PARAM>
+              </PARAMS>
+            </POS-RESPONSE>
+          </POS-RESPONSES>
+          <NEG-RESPONSES>
+            <NEG-RESPONSE ID="_11">
+              <SHORT-NAME>NR_Dynamic_PartNumber_Read</SHORT-NAME>
+              <LONG-NAME>NR Dynamic_PartNumber Read</LONG-NAME>
+              <PARAMS>
+                <PARAM SEMANTIC="SERVICE-ID" xsi:type="CODED-CONST">
+                  <SHORT-NAME>SID_NR</SHORT-NAME>
+                  <LONG-NAME>SID-NR</LONG-NAME>
+                  <BYTE-POSITION>0</BYTE-POSITION>
+                  <CODED-VALUE>127</CODED-VALUE>
+                  <DIAG-CODED-TYPE BASE-DATA-TYPE="A_UINT32" xsi:type="STANDARD-LENGTH-TYPE">
+                    <BIT-LENGTH>8</BIT-LENGTH>
+                  </DIAG-CODED-TYPE>
+                </PARAM>
+                <PARAM SEMANTIC="SERVICEIDRQ" xsi:type="CODED-CONST">
+                  <SHORT-NAME>SIDRQ_NR</SHORT-NAME>
+                  <LONG-NAME>SIDRQ-NR</LONG-NAME>
+                  <BYTE-POSITION>1</BYTE-POSITION>
+                  <CODED-VALUE>34</CODED-VALUE>
+                  <DIAG-CODED-TYPE BASE-DATA-TYPE="A_UINT32" xsi:type="STANDARD-LENGTH-TYPE">
+                    <BIT-LENGTH>8</BIT-LENGTH>
+                  </DIAG-CODED-TYPE>
+                </PARAM>
+                <PARAM SEMANTIC="DATA" xsi:type="VALUE">
+                  <SHORT-NAME>Read</SHORT-NAME>
+                  <LONG-NAME>Read</LONG-NAME>
+                  <BYTE-POSITION>2</BYTE-POSITION>
+                  <DOP-REF ID-REF="_12"/>
+                </PARAM>
+                <PARAM SEMANTIC="DATA" xsi:type="NRC-CONST">
+                  <SHORT-NAME>NRCConst_Read</SHORT-NAME>
+                  <LONG-NAME>Read</LONG-NAME>
+                  <BYTE-POSITION>2</BYTE-POSITION>
+                  <CODED-VALUES>
+                    <CODED-VALUE>19</CODED-VALUE>
+                    <CODED-VALUE>34</CODED-VALUE>
+                    <CODED-VALUE>49</CODED-VALUE>
+                    <CODED-VALUE>51</CODED-VALUE>
+                  </CODED-VALUES>
+                  <DIAG-CODED-TYPE BASE-DATA-TYPE="A_UINT32" xsi:type="STANDARD-LENGTH-TYPE">
+                    <BIT-LENGTH>8</BIT-LENGTH>
+                  </DIAG-CODED-TYPE>
+                </PARAM>
+              </PARAMS>
+            </NEG-RESPONSE>
+          </NEG-RESPONSES>
+        </REQUESTS>
+      </BASE-VARIANT>
+    </BASE-VARIANTS>
+  </DIAG-LAYER-CONTAINER>
+</ODX>
