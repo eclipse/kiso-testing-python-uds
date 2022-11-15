@@ -17,29 +17,30 @@ class DiagCodedType(ABC):
 
     @abstractmethod
     def calculateLength(self, response: List[int]) -> int:
-        pass
+        """
+        """
 
 
 class StandardLengthType(DiagCodedType):
     """Represents the DIAG-CODED-TYPE of a PARAM with a static length
     """
 
-    def __init__(self, base_data_type: str, bitLength: int) -> None:
+    def __init__(self, base_data_type: str, byteLength: int) -> None:
         """initialize attributes
 
         :param base_data_type: BASE-DATA-TYPE attribute of DIAG-CODED-TYPE xml element
-        :param bitLength: length in number of bits
+        :param byteLength: length in number of bytes
         """
         super().__init__(base_data_type)
-        self.bitLength = bitLength
+        self.byteLength = byteLength
 
     def calculateLength(self, response: List[int]) -> int:
         """Returns the static length of StandardLengthType (excluding DID)
 
         :param response: the response to parse the length from (not needed for standard length)
-        :return: length in bits as int
+        :return: length in bytes as int
         """
-        return self.bitLength
+        return self.byteLength
 
     def __repr__(self):
         return f"{self.__class__.__name__}: base-data-type={self.base_data_type} length={self.bitLength}"
@@ -59,6 +60,13 @@ class MinMaxLengthType(DiagCodedType):
         END_OF_PDU = "END-OF-PDU"
 
     def __init__(self, base_data_type: str, minLength: int, maxLength: int, termination: str) -> None:
+        """initialize attributes
+
+        :param base_data_type: BASE-DATA-TYPE attribute of DIAG-CODED-TYPE xml element
+        :param minLength: minimum length in number of bytes
+        :param maxLength: maximum length in number of bytes, can be None
+        :param termination: the termination type from ODX as string
+        """
         super().__init__(base_data_type)
         self.minLength = minLength
         self.maxLength = maxLength
@@ -74,12 +82,11 @@ class MinMaxLengthType(DiagCodedType):
         """
         if termination == "ZERO":
             return MinMaxLengthType.TerminationChar.ZERO
-        elif termination == "HEX-FF":
+        if termination == "HEX-FF":
             return MinMaxLengthType.TerminationChar.HEX_FF
-        elif termination == "END-OF-PDU":
+        if termination == "END-OF-PDU":
             return MinMaxLengthType.TerminationChar.END_OF_PDU
-        else:
-            raise ValueError(f"Termination {termination} found in .odx file is not valid")
+        raise ValueError(f"Termination {termination} found in .odx file is not valid")
 
     def getTerminationLength(self) -> int:
         """get the byte length of the MinMaxLengthType's termination char
@@ -105,18 +112,17 @@ class MinMaxLengthType(DiagCodedType):
             for dynamicLength, value in enumerate(response):
                 if value == self.termination.value and dynamicLength < self.minLength:
                     raise ValueError("Response shorter than expected minimum")
-                elif value == self.termination.value or dynamicLength == self.maxLength:
+                if value == self.termination.value or dynamicLength == self.maxLength:
                     # does it ALWAYS have a termination char, even if max length used?
                     return dynamicLength + 1  # account for 0 indexing
-                elif self.maxLength is not None and dynamicLength > self.maxLength:
+                if self.maxLength is not None and dynamicLength > self.maxLength:
                     raise ValueError("Response longer than expected max length")
         # END-OF-PDU: response ends after max-length or at response end
         else:
             if self.maxLength is None:
                 return len(response)
-            else:
-                # go through response till end or max length (whichever comes first)
-                return min(self.maxLength, len(response))
+            # go through response till end or max length (whichever comes first)
+            return min(self.maxLength, len(response))
 
     def __repr__(self):
         return f"{self.__class__.__name__}: base-data-type={self.base_data_type}, min={self.minLength}, \

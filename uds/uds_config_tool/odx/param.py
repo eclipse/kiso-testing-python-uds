@@ -11,9 +11,16 @@ class Param():
     data is set when parsing a uds response and can then be decoded
     """
 
-    def __init__(self, short_name: str, byte_position: int, diagCodedType: DiagCodedType, data=None):
-        self.short_name = short_name
-        self.byte_position = byte_position
+    def __init__(self, shortName: str, bytePosition: int, diagCodedType: DiagCodedType, data=None) -> None:
+        """initialize attributes
+
+        :param shortName: name defined in ODX as str
+        :param bytePosition: byte position in the response of the param
+        :param diagCodedType: the Param's DiagCodedType containing length and decode info
+        :param data: the part of the uds response that belongs to this Param
+        """
+        self.shortName = shortName
+        self.bytePosition = bytePosition
         self.diagCodedType = diagCodedType
         self.data = data
 
@@ -51,5 +58,5 @@ class Param():
         return decodedResponse
 
     def __repr__(self):
-        return f"{self.__class__.__name__}: short_name={self.short_name}, byte_position={self.byte_position}, \
+        return f"{self.__class__.__name__}: shortName={self.shortName}, bytePosition={self.bytePosition}, \
             diagCodedType={self.diagCodedType}, data={self.data}"

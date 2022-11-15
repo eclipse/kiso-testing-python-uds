@@ -114,8 +114,8 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
                 except AttributeError:
                     pass
 
-                short_name = (paramElement.find("SHORT-NAME")).text
-                byte_position = int((paramElement.find("BYTE-POSITION")).text)
+                shortName = (paramElement.find("SHORT-NAME")).text
+                bytePosition = int((paramElement.find("BYTE-POSITION")).text)
 
                 if semantic == "SERVICE-ID":
                     responseId = int(paramElement.find("CODED-VALUE").text)
@@ -143,7 +143,7 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
                     else:
                         # neither DOP nor STRUCTURE
                         pass
-                    param: Param = Param(short_name, byte_position, diagCodedType)
+                    param: Param = Param(shortName, bytePosition, diagCodedType)
                     params.append(param)
                 else:
                     # not a PARAM with SID, ID (= DID), or DATA

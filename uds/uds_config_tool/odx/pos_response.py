@@ -9,13 +9,20 @@ class PosResponse():
     """
 
     def __init__(self, params: List[Param], didLength: int, DID: int, sidLength: int, SID: int) -> None:
+        """initialize attributes
+
+        :param params: List of Params that are defined in the POS-RESPONSE for a DID
+        :param didLength: byte length of the PosResponse's DID
+        :param DID: the DID value
+        :param sidLength: byte length of the PosResponse's SID
+        :SID: the SID value
+        """
         self.params = params
         self.didLength = didLength
         self.DID = DID
         self.sidLength = sidLength
         self.SID = SID
 
-    # TODO: handle list of params
     def decode(self) -> Dict[str, str]:
         """Decode the data stored in this PosResponses params
 
@@ -24,7 +31,7 @@ class PosResponse():
         """
         result = {}
         for param in self.params:
-            result[param.short_name] = param.decode()
+            result[param.shortName] = param.decode()
         return result
 
     def parseDIDResponseLength(self, udsResponse: List[int]) -> int:
