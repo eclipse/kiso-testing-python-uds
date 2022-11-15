@@ -10,7 +10,8 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 import logging
-from typing import List
+from typing import Dict, List
+from xml.etree.ElementTree import Element as XMLElement
 
 from uds.uds_config_tool import DecodeFunctions
 from uds.uds_config_tool.FunctionCreation.iServiceMethodFactory import \
@@ -83,8 +84,15 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
         return (locals()[requestSIDFuncName], locals()[requestDIDFuncName])
 
     @staticmethod
-    def create_positiveResponseObjects(diagServiceElement, xmlElements):
+    def create_positiveResponseObjects(
+            diagServiceElement: XMLElement,
+            xmlElements: Dict[str, XMLElement]) -> PosResponse:
+        """create a PosResponse instance for each DIAG-SERVICE to parse and decode
+        a DIDs component in a UDS response
 
+        :param diagServiceElement: a DIAG-SERVICE element of an ODX file
+        :param xmlElements: dictionary with all odx elements with ID as key
+        """
         positiveResponseElement = xmlElements[
             (diagServiceElement.find("POS-RESPONSE-REFS"))
             .find("POS-RESPONSE-REF")

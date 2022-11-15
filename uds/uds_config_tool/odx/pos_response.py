@@ -19,7 +19,7 @@ class PosResponse():
     def decode(self) -> Dict[str, str]:
         """Decode the data stored in this PosResponses params
 
-        :throws: ValueError if no data to decode in param
+        :raises ValueError: if no data to decode in a param
         :return: dictionary with the params short name as key and the decoded data as value
         """
         result = {}
@@ -27,13 +27,14 @@ class PosResponse():
             result[param.short_name] = param.decode()
         return result
 
-    def parseDIDResponseLength(self, udsResponse: List[int]) -> List[int]:
+    def parseDIDResponseLength(self, udsResponse: List[int]) -> int:
         """parses the response component that contains this PosResponses (DID) data of the front of the
         passed udsResponse
 
         stores the data parsed for each PARAM as that PARAM's data
 
         :param udsResponse: the (remaining) uds response
+        :return: byte length of this DIDs part of the response
         """
         self.checkDIDInResponse(udsResponse)
         startPosition = self.didLength
@@ -50,6 +51,9 @@ class PosResponse():
 
     def checkDIDInResponse(self, didResponse: List[int]) -> None:
         """compare PosResponse's DID with the DID at beginning of a response
+
+        :param didResponse: uds response to take the DID from
+        :raises AttributeError: if DID does not match the expected DID
         """
         actualDID = DecodeFunctions.buildIntFromList(didResponse[:self.didLength])
         if self.DID != actualDID:
@@ -57,6 +61,9 @@ class PosResponse():
 
     def checkSIDInResponse(self, response: List[int]) -> None:
         """compare PosResponse's SID with the SID at beginning of a response
+
+        :param response: uds response to take the SID from
+        :raises AttributeError: if SID does not match the expected SID
         """
         actualSID = DecodeFunctions.buildIntFromList(response[:self.sidLength])
         if self.SID != actualSID:

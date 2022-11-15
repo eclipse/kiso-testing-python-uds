@@ -18,10 +18,18 @@ class Param():
         self.data = data
 
     def calculateLength(self, response: List[int]) -> int:
+        """calculate the params bytelength in the response based on its DAG CODED TYPE
+
+        :param response: uds response to parse the param from
+        :return: the calculated byte length
+        """
         return self.diagCodedType.calculateLength(response)
 
     def decode(self) -> str:
         """decode Param's internal data that is set after parsing a uds response
+
+        :return: the PARAM's decoded data as string
+        :raises ValueError: if there is no data set to decode
         """
         if self.data is None:
             raise ValueError("Data in param is None, check if data DID response was parsed correctly")

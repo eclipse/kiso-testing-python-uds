@@ -192,18 +192,24 @@ def isDiagServiceTransmissionOnly(diagServiceElement):
 
 
 def findDescendant(name: str, root: XMLElement) -> XMLElement:
-    """Search for an element in all descendants of an element by tag name, returns first instance
+    """Search for an element in all descendants of an element by tag name
+
+    :param name: the xml element tag as str
+    :param root: the xml element to search in
+    :return: first instance found
     """
     for child in root.iter():
-        if child.tag == name:
+        if child.tag == name.upper():
             return child
     return None
 
 
 def getDiagCodedTypeFromDop(dataObjectProp: XMLElement) -> DiagCodedType:
     """Parse ODX to get the DIAG CODED TYPE from a DATA OBJECT PROP and create
-    DiagCodedType object containing necessary info to calculate the length of the response
-    and decode it
+    DiagCodedType object
+
+    :param dataObjectProp: xml element representing a DATA-OBJECT-PROP
+    :return: the DiagCodedType containing necessary info to calculate the length of the response and decode it
     """
     diagCodedTypeElement = dataObjectProp.find("DIAG-CODED-TYPE")
     lengthType = diagCodedTypeElement.get(f"{xsi}type")
@@ -232,8 +238,11 @@ def getDiagCodedTypeFromDop(dataObjectProp: XMLElement) -> DiagCodedType:
 
 def getDiagCodedTypeFromStructure(structure: XMLElement, xmlElements: Dict[str, XMLElement]) -> DiagCodedType:
     """Parse ODX to get the DIAG CODED TYPE from a STRUCTURE and create
-    DiagCodedType object containing necessary info to calculate the length of the response
-    and decode it
+    DiagCodedType object
+
+    :param structure: xml element representing a STRUCTURE
+    :param xmlElements: dict containing all xml elements by ID
+    :return: the DiagCodedType containing necessary info to calculate the length of the response and decode it
     """
     byteSizeElement = structure.find("BYTE-SIZE")
     # STRUCTURE with BYTE-SIZE

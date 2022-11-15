@@ -52,20 +52,26 @@ class MinMaxLengthType(DiagCodedType):
     """
 
     class TerminationChar(Enum):
+        """enum of all allowed termination types of a DIAG CODED TYPE
+        """
         ZERO = 0
         HEX_FF = 255
         END_OF_PDU = "END-OF-PDU"
 
     def __init__(self, base_data_type: str, minLength: int, maxLength: int, termination: str) -> None:
-        """
-        """
         super().__init__(base_data_type)
         self.minLength = minLength
         self.maxLength = maxLength
         self.termination: MinMaxLengthType.TerminationChar = self._getTermination(termination)
 
     @staticmethod
-    def _getTermination(termination):
+    def _getTermination(termination) -> TerminationChar:
+        """get the termination char from a ODX TERMINATION attribute string
+
+        :param termination: termination type as string
+        :return: termination char as enum member
+        :raises ValueError: if param termination is not valid
+        """
         if termination == "ZERO":
             return MinMaxLengthType.TerminationChar.ZERO
         elif termination == "HEX-FF":
@@ -75,7 +81,11 @@ class MinMaxLengthType(DiagCodedType):
         else:
             raise ValueError(f"Termination {termination} found in .odx file is not valid")
 
-    def getTerminationLength(self):
+    def getTerminationLength(self) -> int:
+        """get the byte length of the MinMaxLengthType's termination char
+
+        :return: length of the termination char in byte if it has one (END OF PDU does not)
+        """
         if self.termination == MinMaxLengthType.TerminationChar.ZERO:
             terminationLength = 1
         elif self.termination == MinMaxLengthType.TerminationChar.HEX_FF:
@@ -88,6 +98,7 @@ class MinMaxLengthType(DiagCodedType):
 
         :param response: the response to parse the length from
         :return: length in bytes as int
+        :raises ValueError: if parsed response is shorter or longer than MinMaxLengthType's minimum or maximum
         """
         # ZERO, HEX-FF end after max length, at end of response or after termination char
         if self.termination.value != "END-OF-PDU":
