@@ -196,7 +196,7 @@ def findDescendant(name: str, root: XMLElement) -> XMLElement:
 
     :param name: the xml element tag as str
     :param root: the xml element to search in
-    :return: first instance found
+    :return: first instance found otherwise None
     """
     for child in root.iter():
         if child.tag == name.upper():
@@ -217,7 +217,6 @@ def getDiagCodedTypeFromDop(dataObjectProp: XMLElement) -> DiagCodedType:
     if lengthType == "STANDARD-LENGTH-TYPE":
         bitLengthElement = diagCodedTypeElement.find("BIT-LENGTH")
         bitLength = int(bitLengthElement.text)
-        # TODO: do this in DiagCodedType instead
         byteLength = int(bitLength / 8)
         diagCodedType = StandardLengthType(base_data_type, byteLength)
     elif lengthType == "MIN-MAX-LENGTH-TYPE":

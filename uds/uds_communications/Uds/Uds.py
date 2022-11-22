@@ -47,7 +47,7 @@ class Uds(object):
         self.load_odx(odx)
 
     def load_odx(self, odx_file: Path)-> None:
-        """Lod the given odx file and create the associated UDS
+        """Load the given odx file and create the associated UDS
         diagnostic services:
 
         :param odx_file: idx file full path

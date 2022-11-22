@@ -143,7 +143,7 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
                     else:
                         # neither DOP nor STRUCTURE
                         pass
-                    param: Param = Param(shortName, bytePosition, diagCodedType)
+                    param = Param(shortName, bytePosition, diagCodedType)
                     params.append(param)
                 else:
                     # not a PARAM with SID, ID (= DID), or DATA

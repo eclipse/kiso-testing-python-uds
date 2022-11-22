@@ -73,7 +73,7 @@ class MinMaxLengthType(DiagCodedType):
         self.termination: MinMaxLengthType.TerminationChar = self._getTermination(termination)
 
     @staticmethod
-    def _getTermination(termination) -> TerminationChar:
+    def _getTermination(termination: str) -> TerminationChar:
         """get the termination char from a ODX TERMINATION attribute string
 
         :param termination: termination type as string
