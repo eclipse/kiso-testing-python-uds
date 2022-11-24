@@ -37,6 +37,7 @@ from uds.uds_communications.TransportProtocols.Can.CanTpTypes import (
     CanTpState,
 )
 
+CAN_FD_DATA_LENGTHS = (8, 12, 16, 20, 24, 32, 48, 64)
 
 ##
 # @class CanTp
@@ -51,8 +52,7 @@ class CanTp(TpInterface):
 
     ##
     # @brief constructor for the CanTp object
-    def __init__(self, connector = None, **kwargs):
-
+    def __init__(self, connector=None, **kwargs):
 
         self.__N_AE = Config.isotp.n_ae
         self.__N_TA = Config.isotp.n_ta
@@ -341,7 +341,6 @@ class CanTp(TpInterface):
 
         return list(payload[:payloadLength])
 
-
     ##
     # @brief clear out the receive list
     def clearBufferedMessages(self):
@@ -395,11 +394,20 @@ class CanTp(TpInterface):
         blockPtr = 0
 
         payloadLength = len(payload)
-        pduLength = self.__maxPduLength
-        blockLength = blockSize * pduLength
-
         working = True
         while working:
+            pduLength = (
+                next(
+                    (
+                        size
+                        for size in CAN_FD_DATA_LENGTHS
+                        if size + payloadPtr > payloadLength
+                    ),
+                    64,
+                )
+                - 1
+            )
+            blockLength = blockSize * pduLength
             if (payloadPtr + pduLength) >= payloadLength:
                 working = False
                 currPdu = fillArray(
