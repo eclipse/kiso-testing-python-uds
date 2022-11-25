@@ -24,7 +24,9 @@ setup(
     # Needed to actually package something
     packages=find_packages(exclude=["test", "test.*"]),
     # Needed for dependencies
-    install_requires=["python-can>=4.0.0", "pytest", "pytest-mock"],
+    install_requires=["python-can>=4.0.0"],
+    tests_require=["pytest", "pytest-mock"],
+    extras_require={"test": ["pytest", "pytest-mock"]},
     # *strongly* suggested for sharing
     version="3.0.1",
     # The license can be anything you like

@@ -1,14 +1,15 @@
 from uds.uds_communications.TransportProtocols.Can.CanTp import CanTp
 from uds.interfaces import TpInterface
 
-class TpFactory :
+
+class TpFactory:
     """Transport protocol factory class."""
 
     #: store all available protocols
-    protocols : dict = {"can" : CanTp}
+    protocols: dict = {"can": CanTp}
 
     @classmethod
-    def select_transport_protocol(cls, protocol: str, **kwargs) ->  TpInterface:
+    def select_transport_protocol(cls, protocol: str, **kwargs) -> TpInterface:
         """Select a protocol and instaciate it.
 
         :param protocol: protocol's name
@@ -26,13 +27,13 @@ class TpFactory :
         return protocol_instance(**kwargs)
 
     @classmethod
-    def add_protocol(cls, name : str, obj: TpInterface) -> None:
+    def add_protocol(cls, name: str, obj: TpInterface) -> None:
         """Add a protocol to the available protocols dictionary.
 
         :param name: protocol's name
         :param obj: protocol object reference
 
-        :raises ValueError: if the given protocol's name already exists 
+        :raises ValueError: if the given protocol's name already exists
             in protocols dictionary
         """
         if name in cls.protocols:
@@ -41,7 +42,7 @@ class TpFactory :
         cls.protocols[name] = obj
 
     @classmethod
-    def remove_protocol(cls, name : str) -> None:
+    def remove_protocol(cls, name: str) -> None:
         """Remove a protocol from the available protocols dictionary.
 
         :param name: protocol's name

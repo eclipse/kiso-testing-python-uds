@@ -2,9 +2,11 @@ import logging
 from typing import Dict
 from xml.etree.ElementTree import Element as XMLElement
 
-from uds.uds_config_tool.odx.diag_coded_types import (DiagCodedType,
-                                                      MinMaxLengthType,
-                                                      StandardLengthType)
+from uds.uds_config_tool.odx.diag_coded_types import (
+    DiagCodedType,
+    MinMaxLengthType,
+    StandardLengthType,
+)
 from uds.uds_config_tool.odx.globals import xsi
 
 
@@ -191,7 +193,7 @@ def isDiagServiceTransmissionOnly(diagServiceElement):
     return False
 
 
-def findDescendant(name: str, root: XMLElement) -> XMLElement:
+def find_descendant(name: str, root: XMLElement) -> XMLElement:
     """Search for an element in all descendants of an element by tag name
 
     :param name: the xml element tag as str
@@ -204,71 +206,75 @@ def findDescendant(name: str, root: XMLElement) -> XMLElement:
     return None
 
 
-def getDiagCodedTypeFromDop(dataObjectProp: XMLElement) -> DiagCodedType:
+def get_diag_coded_type_from_dop(data_object_prop: XMLElement) -> DiagCodedType:
     """Parse ODX to get the DIAG CODED TYPE from a DATA OBJECT PROP and create
     DiagCodedType object
 
-    :param dataObjectProp: xml element representing a DATA-OBJECT-PROP
+    :param data_object_prop: xml element representing a DATA-OBJECT-PROP
     :return: the DiagCodedType containing necessary info to calculate the length of the response and decode it
     """
-    diagCodedTypeElement = dataObjectProp.find("DIAG-CODED-TYPE")
-    lengthType = diagCodedTypeElement.get(f"{xsi}type")
-    base_data_type = diagCodedTypeElement.attrib["BASE-DATA-TYPE"]
-    if lengthType == "STANDARD-LENGTH-TYPE":
-        bitLengthElement = diagCodedTypeElement.find("BIT-LENGTH")
-        bitLength = int(bitLengthElement.text)
-        byteLength = int(bitLength / 8)
-        diagCodedType = StandardLengthType(base_data_type, byteLength)
-    elif lengthType == "MIN-MAX-LENGTH-TYPE":
-        minLengthElement = diagCodedTypeElement.find("MIN-LENGTH")
-        maxLengthElement = diagCodedTypeElement.find("MAX-LENGTH")
-        minLength = None
-        maxLength = None
-        if minLengthElement is not None:
-            minLength = int(minLengthElement.text)
-        if maxLengthElement is not None:
-            maxLength = int(maxLengthElement.text)
-        termination = diagCodedTypeElement.attrib["TERMINATION"]
-        diagCodedType = MinMaxLengthType(base_data_type, minLength, maxLength, termination)
+    diag_coded_type_element = data_object_prop.find("DIAG-CODED-TYPE")
+    length_type = diag_coded_type_element.get(f"{xsi}type")
+    base_data_type = diag_coded_type_element.attrib["BASE-DATA-TYPE"]
+    if length_type == "STANDARD-LENGTH-TYPE":
+        bit_length_element = diag_coded_type_element.find("BIT-LENGTH")
+        bit_length = int(bit_length_element.text)
+        byte_length = int(bit_length / 8)
+        diag_coded_type = StandardLengthType(base_data_type, byte_length)
+    elif length_type == "MIN-MAX-LENGTH-TYPE":
+        min_length_element = diag_coded_type_element.find("MIN-LENGTH")
+        max_length_element = diag_coded_type_element.find("MAX-LENGTH")
+        min_length = None
+        max_length = None
+        if min_length_element is not None:
+            min_length = int(min_length_element.text)
+        if max_length_element is not None:
+            max_length = int(max_length_element.text)
+        termination = diag_coded_type_element.attrib["TERMINATION"]
+        diag_coded_type = MinMaxLengthType(
+            base_data_type, min_length, max_length, termination
+        )
     else:
-        raise NotImplementedError(f"Handling of {lengthType} is not implemented")
-    return diagCodedType
+        raise NotImplementedError(f"Handling of {length_type} is not implemented")
+    return diag_coded_type
 
 
-def getDiagCodedTypeFromStructure(structure: XMLElement, xmlElements: Dict[str, XMLElement]) -> DiagCodedType:
+def get_diag_coded_type_from_structure(
+    structure: XMLElement, xml_elements: Dict[str, XMLElement]
+) -> DiagCodedType:
     """Parse ODX to get the DIAG CODED TYPE from a STRUCTURE and create
     DiagCodedType object
 
     :param structure: xml element representing a STRUCTURE
-    :param xmlElements: dict containing all xml elements by ID
+    :param xml_elements: dict containing all xml elements by ID
     :return: the DiagCodedType containing necessary info to calculate the length of the response and decode it
     """
-    byteSizeElement = structure.find("BYTE-SIZE")
+    byte_size_element = structure.find("BYTE-SIZE")
     # STRUCTURE with BYTE-SIZE
     if structure.find("BYTE-SIZE") is not None:
-        byteLength = int(byteSizeElement.text)
+        byte_length = int(byte_size_element.text)
         # get decoding info from first DOP, assume same decoding for each param
-        dop = xmlElements[
-            findDescendant("DOP-REF", structure).attrib["ID-REF"]
-        ]
+        dop = xml_elements[find_descendant("DOP-REF", structure).attrib["ID-REF"]]
         base_data_type = dop.find("DIAG-CODED-TYPE").attrib["BASE-DATA-TYPE"]
-        diagCodedType = StandardLengthType(base_data_type, byteLength)
+        diag_coded_type = StandardLengthType(base_data_type, byte_length)
     # STRUCTURE with DOP-REF
     else:
-        dopRef = findDescendant("DOP-REF", structure)
-        if dopRef is None:
-            raise AttributeError("Could not find DOP from Structure, and no BYTE-SIZE: ODX probably invalid")
-        nestedDop = xmlElements[dopRef.attrib["ID-REF"]]
-        if nestedDop.tag == "DATA-OBJECT-PROP":
-            diagCodedType = getDiagCodedTypeFromDop(nestedDop)
-        elif nestedDop.tag == "END-OF-PDU-FIELD":
+        dop_ref = find_descendant("DOP-REF", structure)
+        if dop_ref is None:
+            raise AttributeError(
+                "Could not find DOP from Structure, and no BYTE-SIZE: ODX probably invalid"
+            )
+        nested_dop = xml_elements[dop_ref.attrib["ID-REF"]]
+        if nested_dop.tag == "DATA-OBJECT-PROP":
+            diag_coded_type = get_diag_coded_type_from_dop(nested_dop)
+        elif nested_dop.tag == "END-OF-PDU-FIELD":
             # handle END-OF-PDU-FIELD?
             pass
         else:
             # nested structure (if possible in ODX spec):
-            # recursively check structure: return getDiagCodedTypeFromStructure(nestedDop, xmlElements)
-            raise NotImplementedError(f"parsing of {nestedDop.tag} is not implemented")
-    return diagCodedType
+            # recursively check structure: return get_diag_coded_type_from_structure(nestedDop, xmlElements)
+            raise NotImplementedError(f"parsing of {nested_dop.tag} is not implemented")
+    return diag_coded_type
 
 
 if __name__ == "__main__":

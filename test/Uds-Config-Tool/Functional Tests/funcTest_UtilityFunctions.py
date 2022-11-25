@@ -1,11 +1,14 @@
 from pathlib import Path
 
-from uds.uds_config_tool.UtilityFunctions import (getLongName,
-                                                  getParamWithSemantic,
-                                                  getPositiveResponse,
-                                                  getSdgsData, getSdgsDataItem,
-                                                  getServiceIdFromDiagService,
-                                                  getShortName)
+from uds.uds_config_tool.UtilityFunctions import (
+    getLongName,
+    getParamWithSemantic,
+    getPositiveResponse,
+    getSdgsData,
+    getSdgsDataItem,
+    getServiceIdFromDiagService,
+    getShortName,
+)
 
 if __name__ == "__main__":
     import xml.etree.ElementTree as ET

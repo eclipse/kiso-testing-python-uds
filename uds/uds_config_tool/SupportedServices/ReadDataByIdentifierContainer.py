@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import annotations
 
 __author__ = "Richard Clubb"
 __copyrights__ = "Copyright 2018, the python-uds project"
@@ -30,7 +31,7 @@ class ReadDataByIdentifierContainer(object):
         self.requestSIDFunctions = {}
         self.requestDIDFunctions = {}
 
-        self.posResponseObjects = {}
+        self.pos_response_objects = {}
 
         self.negativeResponseFunctions = {}
 
@@ -41,7 +42,7 @@ class ReadDataByIdentifierContainer(object):
     @staticmethod
     def __readDataByIdentifier(target, parameter):
 
-        dids: str | List[str] = parameter
+        dids: str | list[str] = parameter
         if type(dids) is not list:
             dids = [dids]
 
@@ -53,8 +54,8 @@ class ReadDataByIdentifierContainer(object):
             target.readDataByIdentifierContainer.requestDIDFunctions[did]
             for did in dids
         ]
-        expectedResponseObjects: List[PosResponse] = [
-            target.readDataByIdentifierContainer.posResponseObjects[did]
+        expected_response_objects: List[PosResponse] = [
+            target.readDataByIdentifierContainer.pos_response_objects[did]
             for did in dids
         ]
 
@@ -76,36 +77,35 @@ class ReadDataByIdentifierContainer(object):
             request
         )  # ... this returns a single response which may cover 1 or more DID response values
 
-        negativeResponse = negativeResponseFunction(
+        negative_response = negativeResponseFunction(
             response
         )  # ... return nrc value if a negative response is received
-        if negativeResponse:
-            return negativeResponse
+        if negative_response:
+            return negative_response
 
         # We have a positive response so check that it makes sense to us ...
         # SID is the same for all expected PosResponses, just take the first
-        expectedResponseObjects[0].checkSIDInResponse(response)
-        SIDLength = expectedResponseObjects[0].sidLength
+        expected_response_objects[0].check_sid_in_response(response)
+        sid_length = expected_response_objects[0].sid_length
         # remove SID from response for further parsing the response per DID/ PosResponse
-        responseRemaining = response[SIDLength:]
+        response_remaining = response[sid_length:]
         # parse each expected DID response of the response and store its part of the data
-        for positiveResponse in expectedResponseObjects:
-            responseLength = positiveResponse.parseDIDResponseLength(responseRemaining)
-            responseRemaining = responseRemaining[responseLength:]
+        for positive_response in expected_response_objects:
+            response_length = positive_response.parse_did_response_length(
+                response_remaining
+            )
+            response_remaining = response_remaining[response_length:]
 
         # after parsing each PARAM has its data and can decode it
-        returnValue = tuple(
-            [
-                response.decode()
-                for response in expectedResponseObjects
-            ]
+        return_value = tuple(
+            [response.decode() for response in expected_response_objects]
         )
 
-        if len(returnValue) == 1:
-            returnValue = returnValue[
+        if len(return_value) == 1:
+            return_value = return_value[
                 0
             ]  # only send back a tuple if there were multiple DIDs
-        return returnValue
+        return return_value
 
     def bind_function(self, bindObject):
         bindObject.readDataByIdentifier = MethodType(
@@ -129,7 +129,7 @@ class ReadDataByIdentifierContainer(object):
     # handles return of the expected DID details length and the extraction of any
     # DID details in the response message fragment for the DID that require return
     def add_posResponseObject(self, aObject: PosResponse, dictionaryEntry: str):
-        self.posResponseObjects[dictionaryEntry] = aObject
+        self.pos_response_objects[dictionaryEntry] = aObject
 
     ##
     # @brief method to add function to container - negativeResponseFunction handles the checking of all possible

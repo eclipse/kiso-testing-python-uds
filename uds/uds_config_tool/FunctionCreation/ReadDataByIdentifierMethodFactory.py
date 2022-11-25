@@ -10,17 +10,22 @@ __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
 import logging
+import sys
+import traceback
 from typing import Dict, List
 from xml.etree.ElementTree import Element as XMLElement
 
 from uds.uds_config_tool import DecodeFunctions
-from uds.uds_config_tool.FunctionCreation.iServiceMethodFactory import \
-    IServiceMethodFactory
+from uds.uds_config_tool.FunctionCreation.iServiceMethodFactory import (
+    IServiceMethodFactory,
+)
 from uds.uds_config_tool.odx.diag_coded_types import DiagCodedType
 from uds.uds_config_tool.odx.param import Param
 from uds.uds_config_tool.odx.pos_response import PosResponse
 from uds.uds_config_tool.UtilityFunctions import (
-    getDiagCodedTypeFromDop, getDiagCodedTypeFromStructure)
+    get_diag_coded_type_from_dop,
+    get_diag_coded_type_from_structure,
+)
 
 # Extended to cater for multiple DIDs in a request - typically rather than processing
 # a whole response in one go, we break it down and process each part separately.
@@ -84,75 +89,81 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
         return (locals()[requestSIDFuncName], locals()[requestDIDFuncName])
 
     @staticmethod
-    def create_positiveResponseObjects(
-            diagServiceElement: XMLElement,
-            xmlElements: Dict[str, XMLElement]) -> PosResponse:
+    def create_positive_response_objects(
+        diag_service_element: XMLElement, xml_elements: Dict[str, XMLElement]
+    ) -> PosResponse:
         """create a PosResponse instance for each DIAG-SERVICE to parse and decode
         a DIDs component in a UDS response
 
-        :param diagServiceElement: a DIAG-SERVICE element of an ODX file
+        :param diag_service_element: a DIAG-SERVICE element of an ODX file
         :param xmlElements: dictionary with all odx elements with ID as key
         """
-        positiveResponseElement = xmlElements[
-            (diagServiceElement.find("POS-RESPONSE-REFS"))
+        positive_response_element = xml_elements[
+            (diag_service_element.find("POS-RESPONSE-REFS"))
             .find("POS-RESPONSE-REF")
             .attrib["ID-REF"]
         ]
-        paramsElement = positiveResponseElement.find("PARAMS")
+        params_element = positive_response_element.find("PARAMS")
         # PosResponse attributes
-        responseId = 0
-        diagnosticId = 0
-        SIDLength = 0
-        DIDLength = 0
+        response_id = 0
+        diagnostic_id = 0
+        sid_length = 0
+        did_length = 0
         params: List[Param] = []
 
-        for paramElement in paramsElement:
+        for param_element in params_element:
             try:
                 semantic = None
                 try:
-                    semantic = paramElement.attrib["SEMANTIC"]
+                    semantic = param_element.attrib["SEMANTIC"]
                 except AttributeError:
                     pass
 
-                shortName = (paramElement.find("SHORT-NAME")).text
-                bytePosition = int((paramElement.find("BYTE-POSITION")).text)
+                short_name = (param_element.find("SHORT-NAME")).text
+                byte_position = int((param_element.find("BYTE-POSITION")).text)
 
                 if semantic == "SERVICE-ID":
-                    responseId = int(paramElement.find("CODED-VALUE").text)
-                    bitLength = int(
-                        (paramElement.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
+                    response_id = int(param_element.find("CODED-VALUE").text)
+                    bit_length = int(
+                        (param_element.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
                     )
-                    SIDLength = int(bitLength / 8)
+                    sid_length = int(bit_length / 8)
                 elif semantic == "ID":
-                    diagnosticId = int(paramElement.find("CODED-VALUE").text)
-                    bitLength = int(
-                        (paramElement.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
+                    diagnostic_id = int(param_element.find("CODED-VALUE").text)
+                    bit_length = int(
+                        (param_element.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
                     )
-                    DIDLength = int(bitLength / 8)
+                    did_length = int(bit_length / 8)
                 elif semantic == "DATA":
-                    diagCodedType: DiagCodedType = None
+                    diag_coded_type: DiagCodedType = None
                     # need to parse the param for the DIAG CODED TYPE
-                    dataObjectElement = xmlElements[
-                        (paramElement.find("DOP-REF")).attrib["ID-REF"]
+                    data_object_element = xml_elements[
+                        (param_element.find("DOP-REF")).attrib["ID-REF"]
                     ]
-                    if dataObjectElement.tag == "DATA-OBJECT-PROP":
-                        diagCodedType = getDiagCodedTypeFromDop(dataObjectElement)
+                    if data_object_element.tag == "DATA-OBJECT-PROP":
+                        diag_coded_type = get_diag_coded_type_from_dop(
+                            data_object_element
+                        )
 
-                    elif dataObjectElement.tag == "STRUCTURE":
-                        diagCodedType = getDiagCodedTypeFromStructure(dataObjectElement, xmlElements)
+                    elif data_object_element.tag == "STRUCTURE":
+                        diag_coded_type = get_diag_coded_type_from_structure(
+                            data_object_element, xml_elements
+                        )
                     else:
                         # neither DOP nor STRUCTURE
                         pass
-                    param = Param(shortName, bytePosition, diagCodedType)
+                    param = Param(short_name, byte_position, diag_coded_type)
                     params.append(param)
                 else:
                     # not a PARAM with SID, ID (= DID), or DATA
                     pass
             except Exception as e:
-                log.debug(e)
+                traceback.print_tb(e.__traceback__)
 
-        posResponse = PosResponse(params, DIDLength, diagnosticId, SIDLength, responseId)
-        return posResponse
+        pos_response = PosResponse(
+            params, did_length, diagnostic_id, sid_length, response_id
+        )
+        return pos_response
 
     @staticmethod
     def create_checkNegativeResponseFunction(diagServiceElement, xmlElements):
@@ -205,7 +216,7 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
                                 nrcElem.find("COMPU-CONST").find("VT").text
                             )
                     except Exception as e:
-                        log.debug(e)
+                        traceback.print_tb(e.__traceback__)
                 pass
 
         negativeResponseFunctionString = negativeResponseFuncTemplate.format(

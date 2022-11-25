@@ -6,8 +6,8 @@
         <DIAG-DATA-DICTIONARY-SPEC>
           <DATA-OBJECT-PROPS>
             <DATA-OBJECT-PROP ID="_1">
-              <SHORT-NAME>PartNumberSize13</SHORT-NAME>
-              <LONG-NAME>partNumber_t</LONG-NAME>
+              <SHORT-NAME>PartNumberSize</SHORT-NAME>
+              <LONG-NAME>partNumberSize</LONG-NAME>
               <COMPU-METHOD>
                   <CATEGORY>IDENTICAL</CATEGORY>
               </COMPU-METHOD>
@@ -102,8 +102,8 @@
         </DIAG-DATA-DICTIONARY-SPEC>
         <DIAG-COMMS>
           <DIAG-SERVICE ID="_3" SEMANTIC="IDENTIFICATION">
-            <SHORT-NAME>DU_BoschDuPartNumber_Read</SHORT-NAME>
-            <LONG-NAME>DU_BoschDuPartNumber Read</LONG-NAME>
+            <SHORT-NAME>Dynamic_PartNumber_Read</SHORT-NAME>
+            <LONG-NAME>Dynamic PartNumber Read</LONG-NAME>
             <SDGS>
               <SDG>
                 <SDG-CAPTION ID="_4">

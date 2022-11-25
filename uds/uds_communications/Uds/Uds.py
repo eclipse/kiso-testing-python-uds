@@ -28,13 +28,15 @@ class Uds(object):
     # @brief a constructor
     # @param [in] reqId The request ID used by the UDS connection, defaults to None if not used
     # @param [in] resId The response Id used by the UDS connection, defaults to None if not used
-    def __init__(self, odx = None, ihexFile=None, **kwargs):
+    def __init__(self, odx=None, ihexFile=None, **kwargs):
 
         self.__transportProtocol = Config.uds.transport_protocol
         self.__P2_CAN_Client = Config.uds.p2_can_client
         self.__P2_CAN_Server = Config.uds.p2_can_server
 
-        self.tp = TpFactory.select_transport_protocol(self.__transportProtocol, **kwargs)
+        self.tp = TpFactory.select_transport_protocol(
+            self.__transportProtocol, **kwargs
+        )
 
         # used as a semaphore for the tester present
         self.__transmissionActive_flag = False
@@ -46,7 +48,7 @@ class Uds(object):
         self.__ihexFile = ihexFileParser(ihexFile) if ihexFile is not None else None
         self.load_odx(odx)
 
-    def load_odx(self, odx_file: Path)-> None:
+    def load_odx(self, odx_file: Path) -> None:
         """Load the given odx file and create the associated UDS
         diagnostic services:
 
@@ -57,7 +59,7 @@ class Uds(object):
         UdsTool.create_service_containers(odx_file)
         UdsTool.bind_containers(self)
 
-    def overwrite_transmit_method(self, func : Callable):
+    def overwrite_transmit_method(self, func: Callable):
         """override transmit method from the asscociated __connection
 
         :param func: callable use to replace the current configured
@@ -65,7 +67,7 @@ class Uds(object):
         """
         self.tp.connection.transmit = func
 
-    def overwrite_receive_method(self, func : Callable):
+    def overwrite_receive_method(self, func: Callable):
         """override the TP reception method
 
         :param func: callable use to replace the current
