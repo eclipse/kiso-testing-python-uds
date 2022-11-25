@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Current version
+
+### Bugfixes
+- Fix sending uds message longer than 62 bytes by CAN
+
 ## [3.0.1]
 
 ## Bugfixes
