@@ -394,24 +394,18 @@ class CanTp(TpInterface):
         blockPtr = 0
 
         payloadLength = len(payload)
+        pduLength = self.__maxPduLength
+        blockLength = blockSize * pduLength
         working = True
         while working:
-            pduLength = (
-                next(
-                    (
-                        size
-                        for size in CAN_FD_DATA_LENGTHS
-                        if size + payloadPtr > payloadLength
-                    ),
-                    64,
-                )
-                - 1
-            )
-            blockLength = blockSize * pduLength
+
             if (payloadPtr + pduLength) >= payloadLength:
                 working = False
+                curr_payload = payload[payloadPtr:]
                 currPdu = fillArray(
-                    payload[payloadPtr:], pduLength, fillValue=self.PADDING_PATTERN
+                    curr_payload,
+                    self.get_padded_length(len(curr_payload)) - 1,
+                    fillValue=self.PADDING_PATTERN,
                 )
                 currBlock.append(currPdu)
                 blockList.append(currBlock)
@@ -428,6 +422,15 @@ class CanTp(TpInterface):
                     blockPtr = 0
 
         return blockList
+
+    @staticmethod
+    def get_padded_length(msg_length: int) -> int:
+        """Get the size of the CAN FD message needed to send a message.
+
+        :param msg_length: length of the message to send
+        :return: size of the CAN FD message
+        """
+        return next(size for size in CAN_FD_DATA_LENGTHS if size > msg_length)
 
     ##
     # @brief transmits the data over can using can connection
