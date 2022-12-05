@@ -404,7 +404,7 @@ class CanTp(TpInterface):
                 curr_payload = payload[payloadPtr:]
                 currPdu = fillArray(
                     curr_payload,
-                    self.get_padded_length(len(curr_payload)) - 1,
+                    self.get_padded_length(len(curr_payload) + 1) - 1,
                     fillValue=self.PADDING_PATTERN,
                 )
                 currBlock.append(currPdu)
@@ -430,7 +430,7 @@ class CanTp(TpInterface):
         :param msg_length: length of the message to send
         :return: size of the CAN FD message
         """
-        return next(size for size in CAN_FD_DATA_LENGTHS if size > msg_length)
+        return next(size for size in CAN_FD_DATA_LENGTHS if size >= msg_length)
 
     ##
     # @brief transmits the data over can using can connection
