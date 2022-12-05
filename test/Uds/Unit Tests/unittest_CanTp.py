@@ -962,9 +962,8 @@ class CanTpTestCase(unittest.TestCase):
 
     @patch("can.interfaces.virtual.VirtualBus.send")
     @patch("uds.CanTp.getNextBufferedMessage")
-    @patch("uds.CanTp.transmit")
     def test_canTpLargeMultiFrameWithMultipleBlockChangingBlockSizeDuringTransmission(
-        self, can_transmit_mocker, getNextMessageMock, canSendMock
+        self, getNextMessageMock, canSendMock
     ):
 
         result = []
@@ -1016,10 +1015,8 @@ class CanTpTestCase(unittest.TestCase):
             payload.append(i % 256)
 
         tpConnection = CanTp(reqId=0x600, resId=0x650)
-        can_transmit_mocker.side_effect = None
         tpConnection.send(payload)
 
-        can_transmit_mocker.assert_called()
         expectedResult = [
             0x11,
             0xF4,
