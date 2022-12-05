@@ -12,17 +12,145 @@ __status__ = "Development"
 
 import unittest
 from unittest.mock import patch
+from parameterized import parameterized
 
 from uds import CanTp
+from uds.config import Config
+
+PADDING_PATTERN = [CanTp.PADDING_PATTERN]
+
+
+class CanTpMocker(CanTp):
+    @patch("uds.config.IsoTpConfig")
+    def __init__(
+        self,
+        iso_mocker,
+        Mtype="DIAGNOSTICS",
+        adressing_type="NORMAL",
+        connector=None,
+        **kwargs
+    ):
+        iso_mocker.m_type = Mtype
+        iso_mocker.addressing_type = adressing_type
+        Config.isotp = iso_mocker
+
+        super().__init__(connector=connector, **kwargs)
 
 
 class CanTpTestCase(unittest.TestCase):
+    @parameterized.expand(
+        [
+            (3, 4),
+            (7, 0),
+            (8, 3),
+            (11, 0),
+            (13, 2),
+            (15, 0),
+            (16, 3),
+            (19, 0),
+            (22, 1),
+            (23, 0),
+            (28, 3),
+            (31, 0),
+            (39, 8),
+            (47, 0),
+            (56, 7),
+            (63, 0),
+        ]
+    )
+    def test_create_blocklist_payload_inferior_than_63_bytes(
+        self, len_payload, len_padding_expected
+    ):
+        test_val = []
+        for i in range(0, len_payload):
+            test_val.append(0xFF)
+
+        tp_connection = CanTpMocker()
+
+        a = tp_connection.create_blockList(test_val, 1)
+
+        self.assertEqual(a, [[test_val + len_padding_expected * PADDING_PATTERN]])
+
+    def test_create_blocklist_longer_than_63_bytes_blocksize_1(self):
+        test_val = []
+        for i in range(0, 66):
+            test_val.append(0xFF)
+
+        tp_connection = CanTpMocker()
+
+        a = tp_connection.create_blockList(test_val, 1)
+
+        self.assertEqual(
+            a,
+            [
+                [test_val[:63]],
+                [test_val[63:] + (7 - len(test_val[63:])) * PADDING_PATTERN],
+            ],
+        )
+
+    def test_create_blocklist_longer_than_63_bytes_blocksize_2(self):
+        test_val = []
+        for i in range(0, 66):
+            test_val.append(0xFF)
+
+        tp_connection = CanTpMocker()
+
+        a = tp_connection.create_blockList(test_val, 2)
+
+        self.assertEqual(
+            a,
+            [
+                [
+                    test_val[:63],
+                    test_val[63:] + (7 - len(test_val[63:])) * PADDING_PATTERN,
+                ],
+            ],
+        )
+
+    def test_create_blocklist_no_block_size_pdu(self):
+        testVal = []
+        for i in range(0, 4089):
+            testVal.append(0xFF)
+
+        result = []
+
+        for i in range(64):
+            result.append([0xFF] * 63)
+
+        result.append([0xFF] * 57 + [0x0] * 6)
+
+        tpConnection = CanTpMocker()
+
+        a = tpConnection.create_blockList(testVal, 585)
+        self.assertEqual(a, [result])
+
+    @parameterized.expand(
+        [
+            (4, 8),
+            (8, 8),
+            (11, 12),
+            (14, 16),
+            (16, 16),
+            (18, 20),
+            (21, 24),
+            (24, 24),
+            (28, 32),
+            (46, 48),
+            (55, 64),
+        ]
+    )
+    def test_get_padded_length(self, len_payload, expected_padded_length):
+        tpConnection = CanTpMocker()
+
+        self.assertEqual(
+            expected_padded_length, tpConnection.get_padded_length(len_payload)
+        )
+
     def test_canTpRaiseExceptionOnTooLargePayload(self):
         payload = []
         for i in range(0, 4096):
             payload.append(0)
-
-        tpConnection = CanTp(reqId=0x600, resId=0x650)
+        tpConnection = CanTpMocker()
         with self.assertRaises(Exception):
             tpConnection.send(payload)
 
@@ -887,7 +1015,6 @@ class CanTpTestCase(unittest.TestCase):
             payload.append(i % 256)
 
         tpConnection = CanTp(reqId=0x600, resId=0x650)
-
         tpConnection.send(payload)
 
         expectedResult = [
@@ -1470,143 +1597,6 @@ class CanTpTestCase(unittest.TestCase):
         ]
 
         self.assertEqual(expectedResult, result)
-
-    def test_canTpCreateBlock_oneBlockSinglePduNotFull(self):
-
-        testVal = []
-        for i in range(0, 6):
-            testVal.append(0xFF)
-
-        tpConnection = CanTp(reqId=0x600, resId=0x650)
-
-        a = tpConnection.create_blockList(testVal, 1)
-
-        self.assertEqual(a, [[[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00]]])
-
-    def test_canTpCreateBlock_oneBlockSinglePduFullSameAsBlockSize(self):
-
-        testVal = []
-        for i in range(0, 7):
-            testVal.append(0xFF)
-
-        tpConnection = CanTp(reqId=0x600, resId=0x650)
-
-        a = tpConnection.create_blockList(testVal, 1)
-
-        self.assertEqual(a, [[[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]]])
-
-    def test_canTpCreateBlock_oneBlockSinglePduFullSmallerThanBlockSize(self):
-
-        testVal = []
-        for i in range(0, 7):
-            testVal.append(0xFF)
-
-        tpConnection = CanTp(reqId=0x600, resId=0x650)
-
-        a = tpConnection.create_blockList(testVal, 2)
-
-        self.assertEqual(a, [[[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]]])
-
-    def test_canTpCreateBlock_oneBlockTwoPduNotFull(self):
-        testVal = []
-        for i in range(0, 13):
-            testVal.append(0xFF)
-
-        tpConnection = CanTp(reqId=0x600, resId=0x650)
-
-        a = tpConnection.create_blockList(testVal, 2)
-
-        self.assertEqual(
-            a,
-            [
-                [
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00],
-                ]
-            ],
-        )
-
-    def test_canTpCreateBlock_oneBlockTwoPduFull(self):
-        testVal = []
-        for i in range(0, 14):
-            testVal.append(0xFF)
-
-        tpConnection = CanTp(reqId=0x600, resId=0x650)
-
-        a = tpConnection.create_blockList(testVal, 2)
-
-        self.assertEqual(
-            a,
-            [
-                [
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                ]
-            ],
-        )
-
-    def test_canTpCreateBlock_twoBlockTwoPduNotFull(self):
-        testVal = []
-        for i in range(0, 27):
-            testVal.append(0xFF)
-
-        tpConnection = CanTp(reqId=0x600, resId=0x650)
-
-        a = tpConnection.create_blockList(testVal, 2)
-
-        self.assertEqual(
-            a,
-            [
-                [
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                ],
-                [
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00],
-                ],
-            ],
-        )
-
-    def test_canTpCreateBlock_twoBlockTwoPduFull(self):
-        testVal = []
-        for i in range(0, 28):
-            testVal.append(0xFF)
-
-        tpConnection = CanTp(reqId=0x600, resId=0x650)
-
-        a = tpConnection.create_blockList(testVal, 2)
-
-        self.assertEqual(
-            a,
-            [
-                [
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                ],
-                [
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                    [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
-                ],
-            ],
-        )
-
-    def test_canTpCreateBlock_noBlockSizePdu(self):
-        testVal = []
-        for i in range(0, 4089):
-            testVal.append(0xFF)
-
-        result = []
-        for i in range(584):
-            result.append([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
-
-        result.append([0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-
-        tpConnection = CanTp(reqId=0x600, resId=0x650)
-
-        a = tpConnection.create_blockList(testVal, 585)
-
-        self.assertEqual(a[0], result)
 
 
 if __name__ == "__main__":

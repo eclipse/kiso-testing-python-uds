@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Current version
+
+### Bugfixes
+- Fix padding of consecutive frames over CAN
+
 ## [3.0.1]
 
 ## Bugfixes
