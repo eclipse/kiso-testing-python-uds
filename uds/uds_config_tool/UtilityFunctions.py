@@ -249,14 +249,19 @@ def get_diag_coded_type_from_structure(
     :param xml_elements: dict containing all xml elements by ID
     :return: the DiagCodedType containing necessary info to calculate the length of the response and decode it
     """
+    diag_coded_type = None
     byte_size_element = structure.find("BYTE-SIZE")
     # STRUCTURE with BYTE-SIZE
     if structure.find("BYTE-SIZE") is not None:
         byte_length = int(byte_size_element.text)
         # get decoding info from first DOP, assume same decoding for each param
         dop = xml_elements[find_descendant("DOP-REF", structure).attrib["ID-REF"]]
-        base_data_type = dop.find("DIAG-CODED-TYPE").attrib["BASE-DATA-TYPE"]
-        diag_coded_type = StandardLengthType(base_data_type, byte_length)
+        # if DOP is another structure, need to go deeper into the xml tree until we find a diag coded type
+        if dop.tag == "STRUCTURE":
+            return get_diag_coded_type_from_structure(dop, xml_elements)
+        else:
+            base_data_type = dop.find("DIAG-CODED-TYPE").attrib["BASE-DATA-TYPE"]
+            diag_coded_type = StandardLengthType(base_data_type, byte_length)
     # STRUCTURE with DOP-REF
     else:
         dop_ref = find_descendant("DOP-REF", structure)

@@ -112,7 +112,6 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
         params: List[Param] = []
 
         for param_element in params_element:
-
             semantic = None
             try:
                 semantic = param_element.attrib["SEMANTIC"]
@@ -156,6 +155,7 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
             else:
                 # not a PARAM with SID, ID (= DID), or DATA
                 pass
+
 
         pos_response = PosResponse(
             params, did_length, diagnostic_id, sid_length, response_id
@@ -213,7 +213,7 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
                                 nrcElem.find("COMPU-CONST").find("VT").text
                             )
                     except Exception as e:
-                        log.warning(e)
+                        log.warning(f"Exception while parsing ODX in checkNegativeResponse: {e}")
                 pass
 
         negativeResponseFunctionString = negativeResponseFuncTemplate.format(
