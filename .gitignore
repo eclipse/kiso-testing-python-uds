@@ -1,4 +1,5 @@
 python_uds.egg-info/
+pykiso_python_uds.egg-info/
 dist/
 build/
 .idea/
@@ -8,3 +9,5 @@ test/Uds-Config-Tool/Functional Tests/*.ihex
 test/Uds-Config-Tool/Functional Tests/*.hex
 *.cdd
 *.cdd~
+.venv
+.vscode

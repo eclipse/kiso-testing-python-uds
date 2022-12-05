@@ -1,12 +1,13 @@
-
 import logging
 from dataclasses import dataclass
 
 log = logging.getLogger(__name__)
 
+
 @dataclass
 class UdsConfig:
     """Encapsulate all uds communication layer parameters."""
+
     transport_protocol: str
     p2_can_client: int
     p2_can_server: int
@@ -15,14 +16,16 @@ class UdsConfig:
 @dataclass
 class IsoTpConfig:
     """Encapsulate all isotp communication layer parameters."""
+
     req_id: int
     res_id: int
     addressing_type: str
-    n_sa: int 
-    n_ta: int 
-    n_ae: int 
+    n_sa: int
+    n_ta: int
+    n_ae: int
     m_type: str
     discard_neg_resp: bool
+
 
 class Config:
     """Load the different communication layer configuration and store
@@ -30,12 +33,12 @@ class Config:
     """
 
     #: store uds configuration class container instance
-    uds : UdsConfig
+    uds: UdsConfig
     #: store isotp configuration class container instance
-    isotp : IsoTpConfig
+    isotp: IsoTpConfig
 
     @classmethod
-    def load_isotp_config(cls, config: dict)-> None:
+    def load_isotp_config(cls, config: dict) -> None:
         """Load and store isotp layer configuration parameters.
 
         :param config: isotp configuration parameters
@@ -54,7 +57,7 @@ class Config:
 
     @classmethod
     def load_com_layer_config(cls, tp_config: dict, uds_config: dict) -> None:
-        """Load and store all configuration parameters from all 
+        """Load and store all configuration parameters from all
         available communication layers.
 
         :param tp_config: isotp configuration parameters
@@ -62,4 +65,3 @@ class Config:
         """
         cls.load_isotp_config(tp_config)
         cls.load_uds_config(uds_config)
-

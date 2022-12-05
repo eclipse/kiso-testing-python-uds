@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from uds.uds_config_tool.UtilityFunctions import (
     getLongName,
     getParamWithSemantic,
@@ -11,9 +13,11 @@ from uds.uds_config_tool.UtilityFunctions import (
 if __name__ == "__main__":
     import xml.etree.ElementTree as ET
 
+    here = Path(__file__).parent
     filename = "Bootloader.odx"
+    filepath = here.joinpath(filename)
 
-    root = ET.parse(filename)
+    root = ET.parse(filepath)
 
     xmlElements = {}
 

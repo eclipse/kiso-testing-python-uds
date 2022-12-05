@@ -51,8 +51,7 @@ class CanTp(TpInterface):
 
     ##
     # @brief constructor for the CanTp object
-    def __init__(self, connector = None, **kwargs):
-
+    def __init__(self, connector=None, **kwargs):
 
         self.__N_AE = Config.isotp.n_ae
         self.__N_TA = Config.isotp.n_ta
@@ -340,7 +339,6 @@ class CanTp(TpInterface):
                 raise Exception("Timeout in waiting for message")
 
         return list(payload[:payloadLength])
-
 
     ##
     # @brief clear out the receive list
