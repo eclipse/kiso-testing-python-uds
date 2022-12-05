@@ -112,53 +112,50 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
         params: List[Param] = []
 
         for param_element in params_element:
+
+            semantic = None
             try:
-                semantic = None
-                try:
-                    semantic = param_element.attrib["SEMANTIC"]
-                except AttributeError:
-                    pass
+                semantic = param_element.attrib["SEMANTIC"]
+            except AttributeError:
+                pass
 
-                short_name = (param_element.find("SHORT-NAME")).text
-                byte_position = int((param_element.find("BYTE-POSITION")).text)
+            short_name = (param_element.find("SHORT-NAME")).text
+            byte_position = int((param_element.find("BYTE-POSITION")).text)
 
-                if semantic == "SERVICE-ID":
-                    response_id = int(param_element.find("CODED-VALUE").text)
-                    bit_length = int(
-                        (param_element.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
+            if semantic == "SERVICE-ID":
+                response_id = int(param_element.find("CODED-VALUE").text)
+                bit_length = int(
+                    (param_element.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
+                )
+                sid_length = int(bit_length / 8)
+            elif semantic == "ID":
+                diagnostic_id = int(param_element.find("CODED-VALUE").text)
+                bit_length = int(
+                    (param_element.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
+                )
+                did_length = int(bit_length / 8)
+            elif semantic == "DATA":
+                diag_coded_type: DiagCodedType = None
+                # need to parse the param for the DIAG CODED TYPE
+                data_object_element = xml_elements[
+                    (param_element.find("DOP-REF")).attrib["ID-REF"]
+                ]
+                if data_object_element.tag == "DATA-OBJECT-PROP":
+                    diag_coded_type = get_diag_coded_type_from_dop(
+                        data_object_element
                     )
-                    sid_length = int(bit_length / 8)
-                elif semantic == "ID":
-                    diagnostic_id = int(param_element.find("CODED-VALUE").text)
-                    bit_length = int(
-                        (param_element.find("DIAG-CODED-TYPE")).find("BIT-LENGTH").text
+                elif data_object_element.tag == "STRUCTURE":
+                    diag_coded_type = get_diag_coded_type_from_structure(
+                        data_object_element, xml_elements
                     )
-                    did_length = int(bit_length / 8)
-                elif semantic == "DATA":
-                    diag_coded_type: DiagCodedType = None
-                    # need to parse the param for the DIAG CODED TYPE
-                    data_object_element = xml_elements[
-                        (param_element.find("DOP-REF")).attrib["ID-REF"]
-                    ]
-                    if data_object_element.tag == "DATA-OBJECT-PROP":
-                        diag_coded_type = get_diag_coded_type_from_dop(
-                            data_object_element
-                        )
-
-                    elif data_object_element.tag == "STRUCTURE":
-                        diag_coded_type = get_diag_coded_type_from_structure(
-                            data_object_element, xml_elements
-                        )
-                    else:
-                        # neither DOP nor STRUCTURE
-                        pass
-                    param = Param(short_name, byte_position, diag_coded_type)
-                    params.append(param)
                 else:
-                    # not a PARAM with SID, ID (= DID), or DATA
+                    # neither DOP nor STRUCTURE
                     pass
-            except Exception as e:
-                traceback.print_tb(e.__traceback__)
+                param = Param(short_name, byte_position, diag_coded_type)
+                params.append(param)
+            else:
+                # not a PARAM with SID, ID (= DID), or DATA
+                pass
 
         pos_response = PosResponse(
             params, did_length, diagnostic_id, sid_length, response_id
@@ -216,7 +213,7 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
                                 nrcElem.find("COMPU-CONST").find("VT").text
                             )
                     except Exception as e:
-                        traceback.print_tb(e.__traceback__)
+                        log.warning(e)
                 pass
 
         negativeResponseFunctionString = negativeResponseFuncTemplate.format(
