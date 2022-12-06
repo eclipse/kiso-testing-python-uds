@@ -105,8 +105,6 @@ class CanTp(TpInterface):
     # @param [in] payload the payload to be sent
     # @param [in] tpWaitTime time to wait inside loop
     def send(self, payload, functionalReq=False, tpWaitTime=0.01, responseRequired=True):
-        if responseRequired:
-            self.clearBufferedMessages()
         result = self.encode_isotp(payload, functionalReq, tpWaitTime=tpWaitTime)
         return result
 
