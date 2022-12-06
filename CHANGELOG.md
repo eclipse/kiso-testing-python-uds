@@ -1,10 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## Current version
+## [3.0.2]
 
 ### Bugfixes
-- Fix padding of consecutive frames over CAN
+- ``CanTp``: Fix padding of consecutive frames over CAN
+- ``CanTp``: Avoid deletion of received CAN messages when sending a message and no response is required
+- ``CanTp``: Make reception polling interval configurable through the ``polling_interval`` attribute 
 
 ## [3.0.1]
 

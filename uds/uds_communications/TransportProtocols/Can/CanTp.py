@@ -94,16 +94,19 @@ class CanTp(TpInterface):
             self.__minPduLength = 6
             self.__maxPduLength = 62
             self.__pduStartIndex = 1
+
         self.__connection = connector
         self.__recvBuffer = []
         self.__discardNegResp = Config.isotp.discard_neg_resp
+        self.polling_interval = 1e-3
 
     ##
     # @brief send method
     # @param [in] payload the payload to be sent
     # @param [in] tpWaitTime time to wait inside loop
-    def send(self, payload, functionalReq=False, tpWaitTime=0.01):
-        self.clearBufferedMessages()
+    def send(self, payload, functionalReq=False, tpWaitTime=0.01, responseRequired=True):
+        if responseRequired:
+            self.clearBufferedMessages()
         result = self.encode_isotp(payload, functionalReq, tpWaitTime=tpWaitTime)
         return result
 
@@ -323,7 +326,7 @@ class CanTp(TpInterface):
                     else:
                         raise Exception("Unexpected PDU received")
             else:
-                sleep(0.01)
+                sleep(self.polling_interval)
 
             if state == CanTpState.SEND_FLOW_CONTROL:
                 txPdu[N_PCI_INDEX] = 0x30
@@ -350,6 +353,10 @@ class CanTp(TpInterface):
     # @brief retrieves the next message from the received message buffers
     # @return list, or None if nothing is on the receive list
     def getNextBufferedMessage(self):
+        # try:
+        #     return self.__recvBuffer.get(blocking=True, timeout)
+        # except queue.Empty:
+        #     return None
         length = len(self.__recvBuffer)
         if length != 0:
             return self.__recvBuffer.pop(0)
@@ -376,7 +383,7 @@ class CanTp(TpInterface):
         if val <= 0x7F:
             time = val / 1000
             return time
-        elif (val >= 0xF1) & (val <= 0xF9):
+        elif 0xF1 <= val <= 0xF9:
             time = (val & 0x0F) / 10000
             return time
         else:
