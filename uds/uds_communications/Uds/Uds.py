@@ -127,11 +127,12 @@ class Uds(object):
         with self.sendLock:
             self.tp.send(msg, functionalReq, tpWaitTime, responseRequired)
 
-        response = None
         if functionalReq is True:
             responseRequired = False
 
         # Note: in automated mode (unlikely to be used any other way), there is no response from tester present, so threading is not an issue here.
+        response = None
+        
         if responseRequired:
             while True:
                 response = self.tp.recv(self.__P2_CAN_Client)

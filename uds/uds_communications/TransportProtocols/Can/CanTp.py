@@ -264,7 +264,7 @@ class CanTp(TpInterface):
         timeout_s=1,
         received_data=None,
         use_external_snd_rcv_functions: bool = False,
-    ):
+    ) -> list:
         timeoutTimer = ResettableTimer(timeout_s)
 
         payload = []
@@ -353,10 +353,6 @@ class CanTp(TpInterface):
     # @brief retrieves the next message from the received message buffers
     # @return list, or None if nothing is on the receive list
     def getNextBufferedMessage(self):
-        # try:
-        #     return self.__recvBuffer.get(blocking=True, timeout)
-        # except queue.Empty:
-        #     return None
         length = len(self.__recvBuffer)
         if length != 0:
             return self.__recvBuffer.pop(0)
