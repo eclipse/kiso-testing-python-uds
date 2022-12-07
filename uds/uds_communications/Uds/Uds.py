@@ -125,7 +125,7 @@ class Uds(object):
 
         # We're moving to threaded operation, so putting a lock around the send operation.
         with self.sendLock:
-            self.tp.send(msg, functionalReq, tpWaitTime, responseRequired)
+            self.tp.send(msg, functionalReq, tpWaitTime)
 
         if functionalReq is True:
             responseRequired = False
