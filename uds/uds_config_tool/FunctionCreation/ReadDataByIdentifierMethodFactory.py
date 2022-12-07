@@ -213,7 +213,7 @@ class ReadDataByIdentifierMethodFactory(IServiceMethodFactory):
                                 nrcElem.find("COMPU-CONST").find("VT").text
                             )
                     except Exception as e:
-                        log.warning(f"Exception while parsing ODX in checkNegativeResponse: {e}")
+                        log.debug(f"Exception while parsing ODX in checkNegativeResponse: {e}")
                 pass
 
         negativeResponseFunctionString = negativeResponseFuncTemplate.format(
