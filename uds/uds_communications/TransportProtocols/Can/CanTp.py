@@ -9,8 +9,8 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
-import configparser
-from os import path
+
+import logging
 from time import sleep
 
 from uds.config import Config
@@ -36,6 +36,8 @@ from uds.uds_communications.TransportProtocols.Can.CanTpTypes import (
     CanTpMTypes,
     CanTpState,
 )
+
+logger = logging.getLogger(__name__)
 
 CAN_FD_DATA_LENGTHS = (8, 12, 16, 20, 24, 32, 48, 64)
 
@@ -94,16 +96,17 @@ class CanTp(TpInterface):
             self.__minPduLength = 6
             self.__maxPduLength = 62
             self.__pduStartIndex = 1
+
         self.__connection = connector
         self.__recvBuffer = []
         self.__discardNegResp = Config.isotp.discard_neg_resp
+        self.polling_interval = 1e-3
 
     ##
     # @brief send method
     # @param [in] payload the payload to be sent
     # @param [in] tpWaitTime time to wait inside loop
     def send(self, payload, functionalReq=False, tpWaitTime=0.01):
-        self.clearBufferedMessages()
         result = self.encode_isotp(payload, functionalReq, tpWaitTime=tpWaitTime)
         return result
 
@@ -126,7 +129,7 @@ class CanTp(TpInterface):
         state = CanTpState.IDLE
 
         if payloadLength > CANTP_MAX_PAYLOAD_LENGTH:
-            raise Exception("Payload too large for CAN Transport Protocol")
+            raise ValueError("Payload too large for CAN Transport Protocol")
 
         if payloadLength < self.__maxPduLength:
             state = CanTpState.SEND_SINGLE_FRAME
@@ -161,7 +164,7 @@ class CanTp(TpInterface):
                 if N_PCI == CanTpMessageType.FLOW_CONTROL:
                     fs = rxPdu[0] & 0x0F
                     if fs == CanTpFsTypes.WAIT:
-                        raise Exception("Wait not currently supported")
+                        raise NotImplementedError("Wait not currently supported")
                     elif fs == CanTpFsTypes.OVERFLOW:
                         raise Exception("Overflow received from ECU")
                     elif fs == CanTpFsTypes.CONTINUE_TO_SEND:
@@ -177,13 +180,13 @@ class CanTp(TpInterface):
                             stMinTimer.start()
                             timeoutTimer.stop()
                         else:
-                            raise Exception(
-                                "Unexpected Flow Control Continue to Send request"
+                            raise ValueError(
+                                "Received unexpected Flow Control Continue to Send request"
                             )
                     else:
-                        raise Exception("Unexpected fs response from ECU")
+                        raise ValueError(f"Unexpected fs response from ECU. {rxPdu}")
                 else:
-                    raise Exception("Unexpected response from device")
+                    logger.warning(f"Unexpected response from ECU while waiting for flow control: 0x{bytes(rxPdu).hex()}")
 
             if state == CanTpState.SEND_SINGLE_FRAME:
                 if len(payload) <= self.__minPduLength:
@@ -239,7 +242,7 @@ class CanTp(TpInterface):
             txPdu = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
             # timer / exit condition checks
             if timeoutTimer.isExpired():
-                raise Exception("Timeout waiting for message")
+                raise TimeoutError("Timeout waiting for message")
         if use_external_snd_rcv_functions:
             return data
 
@@ -261,7 +264,7 @@ class CanTp(TpInterface):
         timeout_s=1,
         received_data=None,
         use_external_snd_rcv_functions: bool = False,
-    ):
+    ) -> list:
         timeoutTimer = ResettableTimer(timeout_s)
 
         payload = []
@@ -314,16 +317,20 @@ class CanTp(TpInterface):
                             rxPdu[CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX] & 0x0F
                         )
                         if sequenceNumber != sequenceNumberExpected:
-                            raise Exception("Consecutive frame sequence out of order")
+                            raise ValueError(
+                                f"Consecutive frame sequence out of order, expected {sequenceNumberExpected} got {sequenceNumber}"
+                            )
                         else:
                             sequenceNumberExpected = (sequenceNumberExpected + 1) % 16
                         payload += rxPdu[CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX:]
                         payloadPtr += self.__maxPduLength
                         timeoutTimer.restart()
                     else:
-                        raise Exception("Unexpected PDU received")
+                        logger.warning(
+                            f"Unexpected PDU received while waiting for consecutive frame: 0x{bytes(rxPdu).hex()}"
+                        )
             else:
-                sleep(0.01)
+                sleep(self.polling_interval)
 
             if state == CanTpState.SEND_FLOW_CONTROL:
                 txPdu[N_PCI_INDEX] = 0x30
@@ -337,7 +344,7 @@ class CanTp(TpInterface):
                     endOfMessage_flag = True
 
             if timeoutTimer.isExpired():
-                raise Exception("Timeout in waiting for message")
+                raise TimeoutError("Timeout in waiting for message")
 
         return list(payload[:payloadLength])
 
@@ -372,15 +379,15 @@ class CanTp(TpInterface):
     ##
     # @brief function to decode the StMin parameter
     @staticmethod
-    def decode_stMin(val):
+    def decode_stMin(val: int) -> float:
         if val <= 0x7F:
             time = val / 1000
             return time
-        elif (val >= 0xF1) & (val <= 0xF9):
+        elif 0xF1 <= val <= 0xF9:
             time = (val & 0x0F) / 10000
             return time
         else:
-            raise Exception("Unknown STMin time")
+            raise ValueError(f"Unknown STMin time {hex(val)}")
 
     ##
     # @brief creates the blocklist from the blocksize and payload

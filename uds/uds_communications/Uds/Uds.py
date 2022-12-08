@@ -9,6 +9,7 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
+import time
 import threading
 from pathlib import Path
 from typing import Callable
@@ -121,21 +122,17 @@ class Uds(object):
     def send(self, msg, responseRequired=True, functionalReq=False, tpWaitTime=0.01):
         # sets a current transmission in progress - tester present (if running) will not send if this flag is set to true
         self.__transmissionActive_flag = True
-        # print(("__transmissionActive_flag set:",self.__transmissionActive_flag))
-
-        response = None
 
         # We're moving to threaded operation, so putting a lock around the send operation.
-        self.sendLock.acquire()
-        try:
-            a = self.tp.send(msg, functionalReq, tpWaitTime)
-        finally:
-            self.sendLock.release()
+        with self.sendLock:
+            self.tp.send(msg, functionalReq, tpWaitTime)
 
         if functionalReq is True:
             responseRequired = False
 
         # Note: in automated mode (unlikely to be used any other way), there is no response from tester present, so threading is not an issue here.
+        response = None
+        
         if responseRequired:
             while True:
                 response = self.tp.recv(self.__P2_CAN_Client)
@@ -143,15 +140,11 @@ class Uds(object):
                     break
 
         # If the diagnostic session control service is supported, record the sending time for possible use by the tester present functionality (again, if present) ...
-        try:
+        if hasattr(self, "sessionSetLastSend"):
             self.sessionSetLastSend()
-        except:
-            pass  # ... if the service isn't present, just ignore
 
         # Lets go of the hold on transmissions - allows test present to resume operation (if it's running)
         self.__transmissionActive_flag = False
-        # print(("__transmissionActive_flag cleared:",self.__transmissionActive_flag))
-
         return response
 
     ##
