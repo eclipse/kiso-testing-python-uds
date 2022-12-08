@@ -186,7 +186,7 @@ class CanTp(TpInterface):
                     else:
                         raise ValueError(f"Unexpected fs response from ECU. {rxPdu}")
                 else:
-                    logger.warning(f"Unexpected response from ECU while waiting for flow control: {rxPdu}")
+                    logger.warning(f"Unexpected response from ECU while waiting for flow control: 0x{bytes(rxPdu).hex()}")
 
             if state == CanTpState.SEND_SINGLE_FRAME:
                 if len(payload) <= self.__minPduLength:
@@ -326,7 +326,9 @@ class CanTp(TpInterface):
                         payloadPtr += self.__maxPduLength
                         timeoutTimer.restart()
                     else:
-                        raise ValueError(f"Unexpected PDU received: {rxPdu}")
+                        logger.warning(
+                            f"Unexpected PDU received while waiting for consecutive frame: 0x{bytes(rxPdu).hex()}"
+                        )
             else:
                 sleep(self.polling_interval)
 
