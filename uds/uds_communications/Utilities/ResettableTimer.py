@@ -31,6 +31,16 @@ class ResettableTimer(iResettableTimer):
     def timeoutTime(self, val):
         self.__timeoutTime = val
 
+    @property
+    def elapsedTime(self) -> float:
+        if self.isRunning():
+            return perf_counter() - self.__startTime
+        return 0
+    
+    @property
+    def leftTime(self) -> float:
+        return self.timeoutTime - self.elapsedTime
+
     def start(self):
         self.__startTime = perf_counter()
         self.__active_flag = True
