@@ -35,10 +35,13 @@ class ResettableTimer(iResettableTimer):
     def elapsedTime(self) -> float:
         if self.isRunning():
             return perf_counter() - self.__startTime
-        return 0
+        elif self.isExpired():
+            return self.timeoutTime
+        else:
+            return 0
     
     @property
-    def leftTime(self) -> float:
+    def remainingTime(self) -> float:
         return self.timeoutTime - self.elapsedTime
 
     def start(self):

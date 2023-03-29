@@ -28,7 +28,7 @@ setup(
     tests_require=["pytest", "pytest-mock"],
     extras_require={"test": ["pytest", "pytest-mock"]},
     # *strongly* suggested for sharing
-    version="3.0.2",
+    version="3.0.3",
     # The license can be anything you like
     license="MIT",
     description="Please use python-uds instead, this is a refactored version with breaking changes, only for pykiso",
@@ -39,6 +39,8 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Operating System :: OS Independent",
     ],
     include_package_data=True,

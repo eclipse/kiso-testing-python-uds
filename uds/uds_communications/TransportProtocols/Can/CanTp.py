@@ -141,7 +141,7 @@ class CanTp(TpInterface):
         consecutive_frame[CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX:] = payload
         return consecutive_frame
     
-    def make_flow_control_frame(self, blocksize: int = 0, st_min: float = 0.030) -> list[int]:
+    def make_flow_control_frame(self, blocksize: int = 0, st_min: float = 0) -> list[int]:
         flow_control = [0x00] * 8
         flow_control[N_PCI_INDEX] = 0x30
         flow_control[FLOW_CONTROL_BS_INDEX] = blocksize
@@ -191,7 +191,7 @@ class CanTp(TpInterface):
         while endOfMessage_flag is False:
 
             if state == CanTpState.WAIT_FLOW_CONTROL:
-                rxPdu = self.getNextBufferedMessage(timeoutTimer.leftTime)
+                rxPdu = self.getNextBufferedMessage(timeoutTimer.remainingTime)
                 if rxPdu is None:
                     raise TimeoutError("Timed out while waiting for flow control message")
 
@@ -287,7 +287,7 @@ class CanTp(TpInterface):
             if use_external_snd_rcv_functions and state != CanTpState.RECEIVING_CONSECUTIVE_FRAME:
                 rxPdu = received_data
             else:
-                rxPdu = self.getNextBufferedMessage(timeout=timeoutTimer.leftTime)
+                rxPdu = self.getNextBufferedMessage(timeout=timeoutTimer.remainingTime)
                 if rxPdu is None:
                     raise TimeoutError(f"Timed out while waiting for message in state {state.name}")
 
