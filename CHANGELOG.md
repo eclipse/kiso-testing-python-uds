@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.0.3]
+
+### Features
+- ``ResettableTimer``: add properties ``elapsedTime`` and ``remainingTime``
+- ``CanTp``: replace polling with blocking queues
+- ``CanTp``: add ``st_min`` attribute and ``encode_st_min`` method
+
 ## [3.0.2]
 
 ### Features

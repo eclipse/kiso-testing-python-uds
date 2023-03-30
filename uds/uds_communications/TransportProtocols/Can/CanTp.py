@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+
 __author__ = "Richard Clubb"
 __copyrights__ = "Copyright 2018, the python-uds project"
 __credits__ = ["Richard Clubb"]
@@ -9,9 +11,8 @@ __maintainer__ = "Richard Clubb"
 __email__ = "richard.clubb@embeduk.com"
 __status__ = "Development"
 
-
 import logging
-from time import sleep
+import queue
 
 from uds.config import Config
 from uds.interfaces import TpInterface
@@ -84,31 +85,68 @@ class CanTp(TpInterface):
         self.__resId = Config.isotp.res_id
 
         # sets up the relevant parameters in the instance
-        if (self.__addressingType == CanTpAddressingTypes.NORMAL) | (
-            self.__addressingType == CanTpAddressingTypes.NORMAL_FIXED
-        ):
+        if self.__addressingType in (CanTpAddressingTypes.NORMAL, CanTpAddressingTypes.NORMAL_FIXED):
             self.__minPduLength = 7
             self.__maxPduLength = 63
             self.__pduStartIndex = 0
-        elif (self.__addressingType == CanTpAddressingTypes.EXTENDED) | (
-            self.__addressingType == CanTpAddressingTypes.MIXED
-        ):
+        elif self.__addressingType in (CanTpAddressingTypes.EXTENDED, CanTpAddressingTypes.MIXED):
             self.__minPduLength = 6
             self.__maxPduLength = 62
             self.__pduStartIndex = 1
 
         self.__connection = connector
-        self.__recvBuffer = []
+        self.__recvBuffer = queue.Queue()
         self.__discardNegResp = Config.isotp.discard_neg_resp
-        self.polling_interval = 1e-3
+
+        # default STmin for flow control when receiving consecutive frames 
+        self.st_min = 0.030
 
     ##
     # @brief send method
     # @param [in] payload the payload to be sent
     # @param [in] tpWaitTime time to wait inside loop
-    def send(self, payload, functionalReq=False, tpWaitTime=0.01):
-        result = self.encode_isotp(payload, functionalReq, tpWaitTime=tpWaitTime)
+    def send(self, payload, functionalReq=False, tpWaitTime=0.01) -> None:
+        result = self.encode_isotp(payload, functionalReq)
         return result
+    
+    def make_single_frame(self, payload: list[int]) -> list[int]:
+        single_frame = [0x00] * 8
+        if len(payload) <= self.__minPduLength:   
+            single_frame[N_PCI_INDEX] += CanTpMessageType.SINGLE_FRAME << 4
+            single_frame[SINGLE_FRAME_DL_INDEX] += len(payload)
+            single_frame[SINGLE_FRAME_DATA_START_INDEX:] = fillArray(
+                payload, self.__minPduLength
+            )
+        else:
+            single_frame[N_PCI_INDEX] = 0
+            single_frame[FIRST_FRAME_DL_INDEX_LOW] = len(payload)
+            single_frame[FIRST_FRAME_DATA_START_INDEX:] = payload
+        return single_frame
+    
+    def make_first_frame(self, payload: list[int]) -> list[int]:
+        first_frame = [0x00] * 8
+        payload_len = len(payload)
+        payloadLength_highNibble = (payload_len & 0xF00) >> 8
+        payloadLength_lowNibble = payload_len & 0x0FF
+        first_frame[N_PCI_INDEX] += CanTpMessageType.FIRST_FRAME << 4
+        first_frame[FIRST_FRAME_DL_INDEX_HIGH] += payloadLength_highNibble
+        first_frame[FIRST_FRAME_DL_INDEX_LOW] = payloadLength_lowNibble
+        first_frame[FIRST_FRAME_DATA_START_INDEX:] = payload[0 : self.__maxPduLength - 1]
+        return first_frame
+    
+    def make_consecutive_frame(self, payload: list[int], sequence_number: int = 1) -> list[int]:
+        consecutive_frame = [0x00] * 8
+        consecutive_frame[N_PCI_INDEX] += CanTpMessageType.CONSECUTIVE_FRAME << 4
+        consecutive_frame[CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX] += sequence_number
+        consecutive_frame[CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX:] = payload
+        return consecutive_frame
+    
+    def make_flow_control_frame(self, blocksize: int = 0, st_min: float = 0) -> list[int]:
+        flow_control = [0x00] * 8
+        flow_control[N_PCI_INDEX] = 0x30
+        flow_control[FLOW_CONTROL_BS_INDEX] = blocksize
+        flow_control[FLOW_CONTROL_STMIN_INDEX] = self.encode_stMin(st_min)
+        return flow_control
 
     ##
     # @brief encoding method
@@ -120,8 +158,7 @@ class CanTp(TpInterface):
         payload,
         functionalReq: bool = False,
         use_external_snd_rcv_functions: bool = False,
-        tpWaitTime=0.01,
-    ):
+    ) -> list[int] | None:
 
         payloadLength = len(payload)
         payloadPtr = 0
@@ -138,15 +175,14 @@ class CanTp(TpInterface):
             # multi frame requests
             state = CanTpState.SEND_FIRST_FRAME
 
-        txPdu = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-
         sequenceNumber = 1
         endOfMessage_flag = False
 
         blockList = []
         currBlock = []
 
-        # this needs fixing to get the timing from the config
+        # TODO this needs fixing to get the timing from the config
+        # general timeout when waiting for a flow control frame from the ECU
         timeoutTimer = ResettableTimer(1)
         stMinTimer = ResettableTimer()
 
@@ -154,95 +190,62 @@ class CanTp(TpInterface):
 
         while endOfMessage_flag is False:
 
-            rxPdu = None
-
             if state == CanTpState.WAIT_FLOW_CONTROL:
-                rxPdu = self.getNextBufferedMessage()
+                rxPdu = self.getNextBufferedMessage(timeoutTimer.remainingTime)
+                if rxPdu is None:
+                    raise TimeoutError("Timed out while waiting for flow control message")
 
-            if rxPdu is not None:
                 N_PCI = (rxPdu[0] & 0xF0) >> 4
                 if N_PCI == CanTpMessageType.FLOW_CONTROL:
                     fs = rxPdu[0] & 0x0F
-                    if fs == CanTpFsTypes.WAIT:
-                        raise NotImplementedError("Wait not currently supported")
-                    elif fs == CanTpFsTypes.OVERFLOW:
-                        raise Exception("Overflow received from ECU")
-                    elif fs == CanTpFsTypes.CONTINUE_TO_SEND:
-                        if state == CanTpState.WAIT_FLOW_CONTROL:
-                            bs = rxPdu[FC_BS_INDEX]
-                            if bs == 0:
-                                bs = 585
-                            blockList = self.create_blockList(payload[payloadPtr:], bs)
-                            stMin = self.decode_stMin(rxPdu[FC_STMIN_INDEX])
-                            currBlock = blockList.pop(0)
-                            state = CanTpState.SEND_CONSECUTIVE_FRAME
-                            stMinTimer.timeoutTime = stMin
-                            stMinTimer.start()
-                            timeoutTimer.stop()
-                        else:
+                    if fs == CanTpFsTypes.CONTINUE_TO_SEND:
+                        if state != CanTpState.WAIT_FLOW_CONTROL:
                             raise ValueError(
                                 "Received unexpected Flow Control Continue to Send request"
                             )
+
+                        block_size = rxPdu[FC_BS_INDEX]
+                        if block_size == 0:
+                            block_size = 585
+                        blockList = self.create_blockList(payload[payloadPtr:], block_size)
+                        currBlock = blockList.pop(0)
+                        stMin = self.decode_stMin(rxPdu[FC_STMIN_INDEX])
+                        stMinTimer.timeoutTime = stMin
+                        stMinTimer.start()
+                        timeoutTimer.stop()
+                        state = CanTpState.SEND_CONSECUTIVE_FRAME
+                    elif fs == CanTpFsTypes.WAIT:
+                        raise NotImplementedError("Wait not currently supported")
+                    elif fs == CanTpFsTypes.OVERFLOW:
+                        raise Exception("Overflow received from ECU")
                     else:
                         raise ValueError(f"Unexpected fs response from ECU. {rxPdu}")
                 else:
                     logger.warning(f"Unexpected response from ECU while waiting for flow control: 0x{bytes(rxPdu).hex()}")
 
             if state == CanTpState.SEND_SINGLE_FRAME:
-                if len(payload) <= self.__minPduLength:
-                    txPdu[N_PCI_INDEX] += CanTpMessageType.SINGLE_FRAME << 4
-                    txPdu[SINGLE_FRAME_DL_INDEX] += payloadLength
-                    txPdu[SINGLE_FRAME_DATA_START_INDEX:] = fillArray(
-                        payload, self.__minPduLength
-                    )
-                else:
-                    txPdu[N_PCI_INDEX] = 0
-                    txPdu[FIRST_FRAME_DL_INDEX_LOW] = payloadLength
-                    txPdu[FIRST_FRAME_DATA_START_INDEX:] = payload
-                data = self.transmit(
-                    txPdu, functionalReq, use_external_snd_rcv_functions
-                )
+                txPdu = self.make_single_frame(payload)
+                data = self.transmit(txPdu, functionalReq, use_external_snd_rcv_functions)
                 endOfMessage_flag = True
             elif state == CanTpState.SEND_FIRST_FRAME:
-                payloadLength_highNibble = (payloadLength & 0xF00) >> 8
-                payloadLength_lowNibble = payloadLength & 0x0FF
-                txPdu[N_PCI_INDEX] += CanTpMessageType.FIRST_FRAME << 4
-                txPdu[FIRST_FRAME_DL_INDEX_HIGH] += payloadLength_highNibble
-                txPdu[FIRST_FRAME_DL_INDEX_LOW] += payloadLength_lowNibble
-                txPdu[FIRST_FRAME_DATA_START_INDEX:] = payload[
-                    0 : self.__maxPduLength - 1
-                ]
+                txPdu = self.make_first_frame(payload)
                 payloadPtr += self.__maxPduLength - 1
-                data = self.transmit(
-                    txPdu, functionalReq, use_external_snd_rcv_functions
-                )
+                data = self.transmit(txPdu, functionalReq, use_external_snd_rcv_functions)
                 timeoutTimer.start()
                 state = CanTpState.WAIT_FLOW_CONTROL
-            elif state == CanTpState.SEND_CONSECUTIVE_FRAME:
-                if stMinTimer.isExpired():
-                    txPdu[N_PCI_INDEX] += CanTpMessageType.CONSECUTIVE_FRAME << 4
-                    txPdu[CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX] += sequenceNumber
-                    txPdu[CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX:] = currBlock.pop(
-                        0
-                    )
-                    payloadPtr += self.__maxPduLength
-                    data = self.transmit(
-                        txPdu, functionalReq, use_external_snd_rcv_functions
-                    )
-                    sequenceNumber = (sequenceNumber + 1) % 16
-                    stMinTimer.restart()
-                    if len(currBlock) == 0:
-                        if len(blockList) == 0:
-                            endOfMessage_flag = True
-                        else:
-                            timeoutTimer.start()
-                            state = CanTpState.WAIT_FLOW_CONTROL
-            else:
-                sleep(tpWaitTime)
-            txPdu = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-            # timer / exit condition checks
-            if timeoutTimer.isExpired():
-                raise TimeoutError("Timeout waiting for message")
+            elif state == CanTpState.SEND_CONSECUTIVE_FRAME and stMinTimer.isExpired():
+                txPdu = self.make_consecutive_frame(currBlock.pop(0), sequenceNumber)
+                payloadPtr += self.__maxPduLength
+                data = self.transmit(txPdu, functionalReq, use_external_snd_rcv_functions)
+                sequenceNumber = (sequenceNumber + 1) % 16
+                stMinTimer.restart()
+                if len(currBlock) == 0:
+                    if len(blockList) == 0:
+                        endOfMessage_flag = True
+                    else:
+                        timeoutTimer.start()
+                        state = CanTpState.WAIT_FLOW_CONTROL
+
         if use_external_snd_rcv_functions:
             return data
 
@@ -265,7 +268,6 @@ class CanTp(TpInterface):
         received_data=None,
         use_external_snd_rcv_functions: bool = False,
     ) -> list:
-        timeoutTimer = ResettableTimer(timeout_s)
 
         payload = []
         payloadPtr = 0
@@ -273,94 +275,85 @@ class CanTp(TpInterface):
 
         sequenceNumberExpected = 1
 
-        txPdu = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-
         endOfMessage_flag = False
 
         state = CanTpState.IDLE
 
+        timeoutTimer = ResettableTimer(timeout_s)
         timeoutTimer.start()
+
         while endOfMessage_flag is False:
 
-            if (
-                use_external_snd_rcv_functions
-                and state != CanTpState.RECEIVING_CONSECUTIVE_FRAME
-            ):
+            if use_external_snd_rcv_functions and state != CanTpState.RECEIVING_CONSECUTIVE_FRAME:
                 rxPdu = received_data
             else:
-                rxPdu = self.getNextBufferedMessage()
+                rxPdu = self.getNextBufferedMessage(timeout=timeoutTimer.remainingTime)
+                if rxPdu is None:
+                    raise TimeoutError(f"Timed out while waiting for message in state {state.name}")
 
-            if rxPdu is not None:
-                if rxPdu[N_PCI_INDEX] == 0x00:
-                    rxPdu = rxPdu[1:]
-                    N_PCI = 0
-                else:
-                    N_PCI = (rxPdu[N_PCI_INDEX] & 0xF0) >> 4
-                if state == CanTpState.IDLE:
-                    if N_PCI == CanTpMessageType.SINGLE_FRAME:
-                        payloadLength = rxPdu[N_PCI_INDEX & 0x0F]
-                        payload = rxPdu[
-                            SINGLE_FRAME_DATA_START_INDEX : SINGLE_FRAME_DATA_START_INDEX
-                            + payloadLength
-                        ]
-                        endOfMessage_flag = True
-                    elif N_PCI == CanTpMessageType.FIRST_FRAME:
-                        payload = rxPdu[FIRST_FRAME_DATA_START_INDEX:]
-                        payloadLength = (
-                            (rxPdu[FIRST_FRAME_DL_INDEX_HIGH] & 0x0F) << 8
-                        ) + rxPdu[FIRST_FRAME_DL_INDEX_LOW]
-                        payloadPtr = self.__maxPduLength - 1
-                        state = CanTpState.SEND_FLOW_CONTROL
-                elif state == CanTpState.RECEIVING_CONSECUTIVE_FRAME:
-                    if N_PCI == CanTpMessageType.CONSECUTIVE_FRAME:
-                        sequenceNumber = (
-                            rxPdu[CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX] & 0x0F
-                        )
-                        if sequenceNumber != sequenceNumberExpected:
-                            raise ValueError(
-                                f"Consecutive frame sequence out of order, expected {sequenceNumberExpected} got {sequenceNumber}"
-                            )
-                        else:
-                            sequenceNumberExpected = (sequenceNumberExpected + 1) % 16
-                        payload += rxPdu[CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX:]
-                        payloadPtr += self.__maxPduLength
-                        timeoutTimer.restart()
-                    else:
-                        logger.warning(
-                            f"Unexpected PDU received while waiting for consecutive frame: 0x{bytes(rxPdu).hex()}"
-                        )
+            if rxPdu[N_PCI_INDEX] == 0x00:
+                rxPdu = rxPdu[1:]
+                N_PCI = CanTpMessageType.SINGLE_FRAME
             else:
-                sleep(self.polling_interval)
+                N_PCI = (rxPdu[N_PCI_INDEX] & 0xF0) >> 4
+
+            if state == CanTpState.IDLE:
+                if N_PCI == CanTpMessageType.SINGLE_FRAME:
+                    payloadLength = rxPdu[N_PCI_INDEX & 0x0F]
+                    payload = rxPdu[
+                        SINGLE_FRAME_DATA_START_INDEX : SINGLE_FRAME_DATA_START_INDEX
+                        + payloadLength
+                    ]
+                    endOfMessage_flag = True
+                elif N_PCI == CanTpMessageType.FIRST_FRAME:
+                    payload = rxPdu[FIRST_FRAME_DATA_START_INDEX:]
+                    payloadLength = (
+                        (rxPdu[FIRST_FRAME_DL_INDEX_HIGH] & 0x0F) << 8
+                    ) + rxPdu[FIRST_FRAME_DL_INDEX_LOW]
+                    payloadPtr = self.__maxPduLength - 1
+                    state = CanTpState.SEND_FLOW_CONTROL
+            elif state == CanTpState.RECEIVING_CONSECUTIVE_FRAME:
+                if N_PCI == CanTpMessageType.CONSECUTIVE_FRAME:
+                    sequenceNumber = (
+                        rxPdu[CONSECUTIVE_FRAME_SEQUENCE_NUMBER_INDEX] & 0x0F
+                    )
+                    if sequenceNumber != sequenceNumberExpected:
+                        raise ValueError(
+                            f"Consecutive frame sequence out of order, expected {sequenceNumberExpected} got {sequenceNumber}"
+                        )
+                    
+                    sequenceNumberExpected = (sequenceNumberExpected + 1) % 16
+                    payload += rxPdu[CONSECUTIVE_FRAME_SEQUENCE_DATA_START_INDEX:]
+                    payloadPtr += self.__maxPduLength
+                    timeoutTimer.restart()
+                else:
+                    logger.warning(
+                        f"Unexpected PDU received while waiting for consecutive frame: 0x{bytes(rxPdu).hex()}"
+                    )
 
             if state == CanTpState.SEND_FLOW_CONTROL:
-                txPdu[N_PCI_INDEX] = 0x30
-                txPdu[FLOW_CONTROL_BS_INDEX] = 0
-                txPdu[FLOW_CONTROL_STMIN_INDEX] = 0x1E
+                txPdu = self.make_flow_control_frame(blocksize=0, st_min=self.st_min)
                 self.transmit(txPdu)
                 state = CanTpState.RECEIVING_CONSECUTIVE_FRAME
 
-            if payloadLength is not None:
-                if payloadPtr >= payloadLength:
-                    endOfMessage_flag = True
-
-            if timeoutTimer.isExpired():
-                raise TimeoutError("Timeout in waiting for message")
+            if payloadLength is not None and payloadPtr >= payloadLength:
+                endOfMessage_flag = True
 
         return list(payload[:payloadLength])
 
     ##
     # @brief clear out the receive list
     def clearBufferedMessages(self):
-        self.__recvBuffer = []
+        with self.__recvBuffer.mutex:
+            self.__recvBuffer.queue.clear()
 
     ##
     # @brief retrieves the next message from the received message buffers
     # @return list, or None if nothing is on the receive list
-    def getNextBufferedMessage(self):
-        length = len(self.__recvBuffer)
-        if length != 0:
-            return self.__recvBuffer.pop(0)
-        else:
+    def getNextBufferedMessage(self, timeout: float = 0) -> list[int] | None:
+        try:
+            return self.__recvBuffer.get(timeout=timeout)
+        except queue.Empty:
             return None
 
     ##
@@ -368,26 +361,39 @@ class CanTp(TpInterface):
     def callback_onReceive(self, msg):
         if self.__addressingType == CanTpAddressingTypes.NORMAL:
             if msg.arbitration_id == self.__resId:
-                self.__recvBuffer.append(msg.data[self.__pduStartIndex :])
+                self.__recvBuffer.put(list(msg.data[self.__pduStartIndex :]))
         elif self.__addressingType == CanTpAddressingTypes.NORMAL_FIXED:
-            raise Exception("I do not know how to receive this addressing type yet")
+            raise NotImplementedError("I do not know how to receive this addressing type yet")
         elif self.__addressingType == CanTpAddressingTypes.MIXED:
-            raise Exception("I do not know how to receive this addressing type yet")
+            raise NotImplementedError("I do not know how to receive this addressing type yet")
         else:
-            raise Exception("I do not know how to receive this addressing type")
+            raise NotImplementedError("I do not know how to receive this addressing type")
 
     ##
     # @brief function to decode the StMin parameter
     @staticmethod
     def decode_stMin(val: int) -> float:
         if val <= 0x7F:
-            time = val / 1000
-            return time
+            return val / 1000
         elif 0xF1 <= val <= 0xF9:
-            time = (val & 0x0F) / 10000
-            return time
+            return (val & 0x0F) / 10000
         else:
-            raise ValueError(f"Unknown STMin time {hex(val)}")
+            raise ValueError(
+                f"Invalid STMin value {hex(val)}, should be between 0x00 and 0x7F or between 0xF1 and 0xF9"
+            )
+        
+    @staticmethod
+    def encode_stMin(val: float) -> int:
+        if (0x01 * 1e-3) <= val <= (0x7F * 1e-3):
+            # 1ms - 127ms -> 0x01 - 0x7F
+            return int(val * 1000)
+        elif 1e-4 <= val <= 9e-4:
+            # 100us - 900us -> 0xF1 - 0xF9
+            return 0xF0 + int(val * 1e4)
+        else:
+            raise ValueError(
+                f"Invalid STMin time {val}, should be between 0.1 and 0.9 ms or between 1 and 127 ms"
+            )
 
     ##
     # @brief creates the blocklist from the blocksize and payload
