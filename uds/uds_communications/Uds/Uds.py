@@ -123,6 +123,7 @@ class Uds(object):
         # sets a current transmission in progress - tester present (if running) will not send if this flag is set to true
         self.__transmissionActive_flag = True
 
+        before_send_time = time.perf_counter()
         # We're moving to threaded operation, so putting a lock around the send operation.
         with self.sendLock:
             self.tp.send(msg, functionalReq, tpWaitTime)
@@ -132,13 +133,19 @@ class Uds(object):
 
         # Note: in automated mode (unlikely to be used any other way), there is no response from tester present, so threading is not an issue here.
         response = None
-        
+        self.last_resp_time = None
+        self.last_pending_resp_times = []
+
         if responseRequired:
             while True:
                 response = self.tp.recv(self.__P2_CAN_Client)
+                current_time = time.perf_counter() - before_send_time
+                if response[2] == 0x78:
+                    self.last_pending_resp_times.append(current_time)
                 if not ((response[0] == 0x7F) and (response[2] == 0x78)):
+                    self.last_resp_time = current_time
                     break
-
+                
         # If the diagnostic session control service is supported, record the sending time for possible use by the tester present functionality (again, if present) ...
         if hasattr(self, "sessionSetLastSend"):
             self.sessionSetLastSend()
