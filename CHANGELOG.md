@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [3.0.4]
+## [3.1.0]
 
 ### Features
 - ``Uds``: add response time and list of response pending times as attribute 
