@@ -145,7 +145,7 @@ class Uds(object):
                 response = self.tp.recv(self.__P2_CAN_Client)
                 current_time = time.perf_counter() - before_send_time
                 if response[2] == 0x78:
-                    if previous_time == None:
+                    if previous_time is None:
                         self.last_pending_resp_times.append(current_time)
                         previous_time = current_time
                     else:
