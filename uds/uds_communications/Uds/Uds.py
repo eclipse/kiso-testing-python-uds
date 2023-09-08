@@ -144,15 +144,15 @@ class Uds(object):
             while True:
                 response = self.tp.recv(self.__P2_CAN_Client)
                 current_time = time.perf_counter() - before_send_time
-                if response[2] == 0x78:
+                if not ((response[0] == 0x7F) and (response[2] == 0x78)):
+                    self.last_resp_time = current_time
+                    break
+                else:
                     if previous_time is None:
                         self.last_pending_resp_times.append(current_time)
                         previous_time = current_time
                     else:
                         self.last_pending_resp_times.append(current_time - previous_time)
-                if not ((response[0] == 0x7F) and (response[2] == 0x78)):
-                    self.last_resp_time = current_time
-                    break
                 
         # If the diagnostic session control service is supported, record the sending time for possible use by the tester present functionality (again, if present) ...
         if hasattr(self, "sessionSetLastSend"):
