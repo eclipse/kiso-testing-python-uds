@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [3.1.1]
 
-### Features
+### Bugfixes
 - ``Uds``: fix index out of range for uds response
 
 ## [3.1.0]
