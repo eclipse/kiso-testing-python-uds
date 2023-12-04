@@ -164,15 +164,15 @@ class CanTp(TpInterface):
         return single_frame
     
     def make_first_frame(self, payload: List[int]) -> List[int]:
-        first_frame = [self.PADDING_PATTERN] * 8
         mdl = len(payload)
         mdl_high_nibble = (mdl & 0xF00) >> 8
         mdl_low_nibble = mdl & 0x0FF
         first_frame = [
-            CanTpMessageType.FIRST_FRAME << 4 + mdl_high_nibble,
+            (CanTpMessageType.FIRST_FRAME << 4) + mdl_high_nibble,
             mdl_low_nibble,
             *payload[: self._max_pdu_length - 1]
         ]
+        first_frame = self.add_padding(first_frame)
         return first_frame
     
     def make_consecutive_frame(self, payload: List[int], sequence_number: int = 1) -> List[int]:
@@ -184,7 +184,11 @@ class CanTp(TpInterface):
         return consecutive_frame
     
     def make_flow_control_frame(self, blocksize: int = 0, st_min: float = 0) -> List[int]:
-        flow_control_frame = [0x30, blocksize, self.encode_stMin(st_min)]
+        flow_control_frame = [
+            (CanTpMessageType.FLOW_CONTROL << 4), 
+            blocksize, 
+            self.encode_stMin(st_min)
+        ]
         flow_control_frame = self.add_padding(flow_control_frame)
         return flow_control_frame
 
