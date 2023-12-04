@@ -27,12 +27,9 @@ from uds.uds_communications.TransportProtocols.Can.CanTpTypes import (
     FIRST_FRAME_DATA_START_INDEX,
     FIRST_FRAME_DL_INDEX_HIGH,
     FIRST_FRAME_DL_INDEX_LOW,
-    FLOW_CONTROL_BS_INDEX,
-    FLOW_CONTROL_STMIN_INDEX,
     MINIMUM_HEADER_SIZE,
     N_PCI_INDEX,
     SINGLE_FRAME_DATA_START_INDEX,
-    SINGLE_FRAME_DL_INDEX,
     CanTpAddressingTypes,
     CanTpFsTypes,
     CanTpMessageType,
@@ -112,6 +109,7 @@ class CanTp(TpInterface):
     @is_fd.setter
     def is_fd(self, value: bool):
         self._max_frame_length = 64 if value is True else 8
+        self._max_pdu_length = (self._max_frame_length - self._pdu_start_index - MINIMUM_HEADER_SIZE)
 
     @property
     def reqIdAddress(self):
@@ -161,7 +159,7 @@ class CanTp(TpInterface):
             ]
         else:
             # otherwise the MDL is indicated in the entire 2nd byte
-            single_frame = [0x00, len(payload), *payload]
+            single_frame = [CanTpMessageType.SINGLE_FRAME, len(payload), *payload]
             single_frame = self.add_padding(single_frame)
         return single_frame
     
