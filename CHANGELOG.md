@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [3.2.0]
+
+### Features:
+- ``CanTp``: add ``is_fd`` property to switch between CAN and CAN FD
+
 ## [3.1.1]
 
 ### Bugfixes

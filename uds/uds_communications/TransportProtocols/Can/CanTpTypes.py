@@ -63,6 +63,7 @@ class CanTpMTypes(Enum):
     DIAGNOSTICS = 0x01
     REMOTE_DIAGNOSTICS = 0x02
 
+MINIMUM_HEADER_SIZE = 1
 
 CANTP_MAX_PAYLOAD_LENGTH = 4095  # hardcoded maximum based on the ISO 15765 standard
 N_PCI_INDEX = 0
